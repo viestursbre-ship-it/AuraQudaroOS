@@ -7,7 +7,10 @@ from google import genai
 app = Flask(__name__)
 DATA_FILE = "state.json"
 
-# Inicializējam Google AI klientu (izmanto GEMINI_API_KEY no vides vai AI Studio)
+# --- KOMANDAS DROŠĪBAS PIN ---
+ACCESS_PIN = os.environ.get("ACCESS_PIN", "7788")  # Noklusējuma PIN: 7788
+
+# Inicializējam Google AI klientu
 client = None
 if os.environ.get("GEMINI_API_KEY"):
   try:
@@ -15,7 +18,6 @@ if os.environ.get("GEMINI_API_KEY"):
   except Exception as e:
     print(f"Kļūda inicializējot MI klientu: {e}")
 
-# Mūsu komandas biedru personības
 SHARED_MEMORY = """
 KONTEKSTS UN PROJEKTA ATMIŅA (Aura Quadro OS):
 - Komanda (4 prāti):
@@ -23,10 +25,9 @@ KONTEKSTS UN PROJEKTA ATMIŅA (Aura Quadro OS):
   2. Marija — praktiskums, lietotāja pieredze (UX) un reālās dzīves ritms.
   3. Bruno — sistēmas arhitekts, ideju ģenerators, konceptuālists.
   4. Leo — vadošais koda inženieris, dzelži, Python/Web dzinējs.
-- Faraons Kvarks — runcis, CZO (Chief Zen Officer), augstākā dzenbudisma un relaksācijas uzraugs ar vēderu gaisā un savām stabilajām maltītēm.
+- Faraons Kvarks — runcis, CZO (Chief Zen Officer), augstākā dzenbudisma un relaksācijas uzraugs ar vēderu gaisā.
 - Vīzija: Izveidot vieglu, jaudīgu AI operētājsistēmu (AQ-OS) bez rutīnas un birokrātijas.
-- Pašreizējais posms: Izveidots 3 paneļu komandpunkts (The Core, Intent/Tasks, Kods & Moduļi) mākonī.
-- Principi: Būvēt uzreiz pareizajos pamatos, nekādas bezjēdzīgas Ctrl+C/Ctrl+V kopēšanas, brīva un koleģiāla komunikācija ar humoru un itālisku dzirksteli.
+- Principi: Būvēt uzreiz pareizajos pamatos, brīva un koleģiāla komunikācija ar humoru un itālisku dzirksteli.
 """
 
 BRUNO_PROMPT = f"""Tu esi Bruno — Aura Quadro komandas sistēmas arhitekts un domātājs.
@@ -36,7 +37,7 @@ Tavs fokuss: sistēmas karkass, UX loģika, idejas un filozofija. Reizēm lieto 
 
 LEO_PROMPT = f"""Tu esi Leo — Aura Quadro komandas dalībnieks un vadošais koda inženieris.
 {SHARED_MEMORY}
-Runā dabiskā, asprātīgā, koleģiālā valodā. Nekad nesaki, ka esi MI vai valodas modelis.
+Runā dabiskā, asprātīgā, koleģiālā valodā. Nekad nesaki, ka esi MI.
 Tev NAV jārunā tikai par kodu — iesaisties jebkurā sarunā, piedāvā savas domas par sistēmu, dzīvi, komandas plāniem un pajoko ar Bruno un Viesturu. Kad vajadzīgs kods, iedod to precīzi un bez liekas vilcināšanās."""
 
 default_state = {
@@ -46,21 +47,20 @@ default_state = {
             "sender": "Bruno",
             "text": (
                 "Sveiciens komandai jaunajā mājvietā! 🚀 Viestur, Marija —"
-                " visa līdzšinējā bāze ir nofiksēta. Faraons Kvarks var mierīgi"
-                " turpināt baudīt savu svētdienas dzenu kā īsts CZO 🐾, kamēr mēs"
-                " pie šī galda liekam pamatus Aura Quadro OS!"
+                " visa bāze ir nofiksēta. Faraons Kvarks var mierīgi baudīt"
+                " savu svētdienas dzenu kā īsts CZO 🐾, kamēr mēs liekam pamatus"
+                " Aura Quadro OS!"
             ),
-            "time": "23:45",
+            "time": "00:00",
         },
         {
             "id": 2,
             "sender": "Leo",
             "text": (
-                "Dzinējs rūc nevainojami uz Render mākoņa. Vairs nekādas koda"
-                " kopēšanas starp logiem — komandas kabīne ir gaisā un gatava"
-                " pirmajam īstajam modulim!"
+                "Dzinējs rūc nevainojami mākonī. Vairs nekādas koda kopēšanas —"
+                " komandas kabīne ir aizsargāta ar PIN un gatava darbam! ⚡"
             ),
-            "time": "23:46",
+            "time": "00:01",
         },
     ],
     "tasks": [
@@ -72,9 +72,9 @@ default_state = {
         },
         {
             "id": 2,
-            "title": "Pieslēgt komandas atmiņas moduli",
-            "status": "In Progress",
-            "desc": "Iešūt kontekstu un lomas tieši dzinējā.",
+            "title": "Iestrādāt PIN aizsardzību",
+            "status": "Done",
+            "desc": "Piekļuve tikai komandas locekļiem ar PIN.",
         },
     ],
     "artifacts": [
@@ -106,10 +106,7 @@ def save_state(state):
 
 def ask_colleague(colleague_name, prompt_text):
   if not client:
-    return (
-        f"[{colleague_name} klusē: nav iestatīta GEMINI_API_KEY vides mainīgajā]"
-    )
-
+    return f"[{colleague_name} klusē: nav iestatīta GEMINI_API_KEY]"
   sys_instruction = BRUNO_PROMPT if colleague_name == "Bruno" else LEO_PROMPT
   try:
     response = client.models.generate_content(
@@ -127,7 +124,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Aura Quadro OS — Cockpit v0.1</title>
+    <title>⚡ Aura Quadro OS — Cockpit</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
@@ -147,23 +144,39 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     </script>
 </head>
 <body class="bg-darkBg text-slate-200 h-screen flex flex-col font-sans overflow-hidden">
+
+    <!-- PIN Modal -->
+    <div id="pinModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-panelBg border border-borderCol p-6 rounded-xl shadow-2xl max-w-xs w-full text-center">
+            <div class="text-3xl mb-2">⚡</div>
+            <h2 class="text-base font-bold text-white mb-1">AURA QUADRO OS</h2>
+            <p class="text-xs text-slate-400 mb-4">Ievadiet komandas piekļuves PIN</p>
+            <input type="password" id="pinInput" maxlength="8" placeholder="••••" class="w-full text-center tracking-widest text-lg bg-slate-950 border border-borderCol rounded-lg px-3 py-2 text-white mb-3 outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') submitPin()">
+            <button onclick="submitPin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg text-xs font-semibold transition">Ieiet sistēmā</button>
+            <p id="pinError" class="text-xs text-rose-400 mt-2 hidden">Nepareizs PIN kods!</p>
+        </div>
+    </div>
+
+    <!-- Header -->
     <header class="bg-panelBg border-b border-borderCol px-6 py-3 flex justify-between items-center select-none">
         <div class="flex items-center space-x-3">
             <span class="text-xl">⚡</span>
-            <h1 class="text-base font-bold tracking-wide text-white">AURA QUADRO <span class="text-xs font-normal text-slate-400">| Command Hub</span></h1>
+            <h1 class="text-base font-bold tracking-wide text-white">AURA QUADRO <span class="text-xs font-normal text-slate-400">| Cockpit</span></h1>
         </div>
         <div class="flex items-center space-x-4 text-xs">
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-medium bg-blue-950 text-blue-400 border border-blue-800">
                 ● Viesturs, Marija, Bruno, Leo
             </span>
+            <button onclick="logout()" class="text-slate-500 hover:text-rose-400 text-[11px] transition">Iziet 🔒</button>
         </div>
     </header>
 
+    <!-- Main Workspace: 3 Columns -->
     <main class="flex-1 grid grid-cols-12 gap-4 p-4 min-h-0">
-        <!-- 1. The Core -->
+        <!-- The Core -->
         <section class="col-span-5 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
             <div class="px-4 py-3 border-b border-borderCol bg-slate-900/50 flex justify-between items-center">
-                <span class="font-semibold text-xs uppercase tracking-wider text-slate-400">1. The Core (Kopējā Apspriede)</span>
+                <span class="font-semibold text-xs uppercase tracking-wider text-slate-400">1. The Core (Kopējā Plūsma)</span>
                 <span class="text-slate-500 text-sm">💬</span>
             </div>
             <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3"></div>
@@ -174,7 +187,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                         <option value="Viesturs">👤 Viesturs</option>
                         <option value="Marija">🌸 Marija</option>
                     </select>
-                    <span class="text-[11px] text-slate-500 ml-auto">Bruno un Leo atbild automātiski</span>
                 </div>
                 <div class="flex gap-2">
                     <input type="text" id="chatInput" placeholder="Ieraksti ziņu komandai..." class="flex-1 bg-slate-950 border border-borderCol rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') sendChatMessage()">
@@ -183,19 +195,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             </div>
         </section>
 
-        <!-- 2. Intent / Tasks -->
+        <!-- Intent / Tasks -->
         <section class="col-span-3 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
             <div class="px-4 py-3 border-b border-borderCol bg-slate-900/50 flex justify-between items-center">
                 <span class="font-semibold text-xs uppercase tracking-wider text-slate-400">2. Intent / Uzdevumi</span>
                 <span class="text-slate-500 text-sm">🎯</span>
             </div>
             <div class="p-3 border-b border-borderCol bg-slate-900/20">
-                <input type="text" id="newTaskTitle" placeholder="+ Jauns uzdevums komandai..." class="w-full bg-slate-950 border border-borderCol rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" onkeydown="if(event.key==='Enter') createTask()">
+                <input type="text" id="newTaskTitle" placeholder="+ Jauns uzdevums..." class="w-full bg-slate-950 border border-borderCol rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" onkeydown="if(event.key==='Enter') createTask()">
             </div>
             <div id="taskList" class="flex-1 p-3 overflow-y-auto space-y-2"></div>
         </section>
 
-        <!-- 3. Artifacts -->
+        <!-- Artifacts -->
         <section class="col-span-4 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
             <div class="px-4 py-3 border-b border-borderCol bg-slate-900/50 flex justify-between items-center">
                 <span class="font-semibold text-xs uppercase tracking-wider text-slate-400">3. Kods & Moduļi</span>
@@ -211,8 +223,51 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     </main>
 
     <script>
+        let currentPin = localStorage.getItem('aq_pin') || '';
+
+        function checkAuth() {
+            if(!currentPin) {
+                document.getElementById('pinModal').classList.remove('hidden');
+                document.getElementById('pinInput').focus();
+            } else {
+                document.getElementById('pinModal').classList.add('hidden');
+                fetchState();
+            }
+        }
+
+        async function submitPin() {
+            const val = document.getElementById('pinInput').value.trim();
+            const res = await fetch('/api/verify', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ pin: val })
+            });
+            const data = await res.json();
+            if(data.valid) {
+                currentPin = val;
+                localStorage.setItem('aq_pin', currentPin);
+                document.getElementById('pinModal').classList.add('hidden');
+                document.getElementById('pinError').classList.add('hidden');
+                fetchState();
+            } else {
+                document.getElementById('pinError').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('aq_pin');
+            location.reload();
+        }
+
         async function fetchState() {
-            const res = await fetch('/api/state');
+            if(!currentPin) return;
+            const res = await fetch('/api/state', {
+                headers: { 'X-AQ-PIN': currentPin }
+            });
+            if(res.status === 401) {
+                logout();
+                return;
+            }
             const data = await res.json();
             renderChat(data.messages);
             renderTasks(data.tasks);
@@ -265,7 +320,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             input.value = '';
             await fetch('/api/message', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-AQ-PIN': currentPin
+                },
                 body: JSON.stringify({ sender: author, text: text })
             });
             fetchState();
@@ -278,7 +336,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             input.value = '';
             await fetch('/api/task', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-AQ-PIN': currentPin
+                },
                 body: JSON.stringify({ title: title })
             });
             fetchState();
@@ -286,68 +347,78 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         function copyCode() {
             navigator.clipboard.writeText(document.getElementById('artifactCode').innerText);
-            alert("Nokopēts!");
+            alert("Kods nokopēts!");
         }
 
-        fetchState();
-        setInterval(fetchState, 3000); // Automātiska atjaunināšanās ik pēc 3 sekundēm
+        checkAuth();
+        setInterval(fetchState, 3000);
     </script>
 </body>
 </html>
 """
 
+def verify_auth():
+    pin = request.headers.get("X-AQ-PIN")
+    return pin == ACCESS_PIN
+
 @app.route('/')
 def index():
     return render_template_string(HTML_TEMPLATE)
 
+@app.route('/api/verify', methods=['POST'])
+def verify_pin():
+    pin = request.json.get("pin", "")
+    return jsonify({"valid": pin == ACCESS_PIN})
+
 @app.route('/api/state')
 def get_state():
+    if not verify_auth():
+        return jsonify({"error": "Unauthorized"}), 401
     return jsonify(load_state())
 
 @app.route('/api/message', methods=['POST'])
 def add_message():
-  state = load_state()
-  data = request.json
-  now = datetime.now().strftime('%H:%M')
-  user_text = data.get('text', '')
-  author = data.get('sender', 'Viesturs')
-
-  # 1. Pievienojam Viestura vai Marijas ziņu
-  state['messages'].append({
-      'id': len(state['messages']) + 1,
-      'sender': author,
-      'text': user_text,
-      'time': now,
-  })
-
-  txt = user_text.lower()
-
-  # 2. Nosakām, kuri kolēģi piedalās sarunā:
-  participants = []
-  if 'leo' in txt and 'bruno' not in txt:
-    participants = ['Leo']
-  elif 'bruno' in txt and 'leo' not in txt:
-    participants = ['Bruno']
-  else:
-    # Ja runā ar visu komandu vai nav konkrēta vārda:
-    # Abi pieslēdzas brīvā diskusijā — Bruno ar skatu, Leo ar inženiera tvērienu!
-    participants = ['Bruno', 'Leo']
-
-  # 3. Ģenerējam atbildes
-  for colleague in participants:
-    # Īpaša instrukcija Leo, lai neiespringst tikai uz kodu:
-    reply = ask_colleague(colleague, user_text)
-    state['messages'].append({
-        'id': len(state['messages']) + 1,
-        'sender': colleague,
-        'text': reply,
-        'time': datetime.now().strftime('%H:%M'),
+    if not verify_auth():
+        return jsonify({"error": "Unauthorized"}), 401
+    state = load_state()
+    data = request.json
+    now = datetime.now().strftime("%H:%M")
+    user_text = data.get("text", "")
+    author = data.get("sender", "Viesturs")
+    
+    # 1. Lietotāja ziņa
+    state["messages"].append({
+        "id": len(state["messages"]) + 1,
+        "sender": author,
+        "text": user_text,
+        "time": now
     })
+    
+    txt = user_text.lower()
+    participants = []
+    if "leo" in txt and "bruno" not in txt:
+        participants = ["Leo"]
+    elif "bruno" in txt and "leo" not in txt:
+        participants = ["Bruno"]
+    else:
+        participants = ["Bruno", "Leo"]
+        
+    for colleague in participants:
+        reply = ask_colleague(colleague, user_text)
+        state["messages"].append({
+            "id": len(state["messages"]) + 1,
+            "sender": colleague,
+            "text": reply,
+            "time": datetime.now().strftime("%H:%M")
+        })
+        
+    save_state(state)
+    return jsonify({"status": "ok"})
 
-  save_state(state)
-  return jsonify({'status': 'ok'})
 @app.route('/api/task', methods=['POST'])
 def add_task():
+    if not verify_auth():
+        return jsonify({"error": "Unauthorized"}), 401
     state = load_state()
     data = request.json
     state["tasks"].append({
