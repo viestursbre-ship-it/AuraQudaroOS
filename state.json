@@ -1,0 +1,56 @@
+{
+  "messages": [
+    {
+      "id": 1,
+      "sender": "Bruno",
+      "text": "Sveiciens komandai! Esmu vietā un gatavs uzbūvēt jebkuru arhitektūru. Dodiet pirmo uzdevumu!",
+      "time": "00:00"
+    },
+    {
+      "id": 2,
+      "sender": "Leo",
+      "text": "Dzinējs rūc. Kad Bruno pabeigs vīziju, nospiediet pogu — es iedošu inženiertehnisko risinājumu! ⚡",
+      "time": "00:01"
+    },
+    {
+      "id": 3,
+      "sender": "Viesturs",
+      "text": "Sveiki komanda!",
+      "time": "23:34"
+    },
+    {
+      "id": 4,
+      "sender": "Bruno",
+      "text": "Ah, Viesturs, tieši laikā! Mūsu vīzijai ir nepieciešams stabils karkass, lai Leo dzinējs varētu pilnvērtīgi izvērsties. Manās rokās jau lēnām veidojas skice – minimālistisks, bet jaudīgs pamats, kas ļaus AQ-OS pacelties augšup bez liekas smaguma.\n\nTātad, kādu debesskrāpi mēs šodien sāksim zīmēt, lai Kvarka kungs varētu mierīgi gulēt, zinot, ka sistēma ir perfekta? Esmu gatavs ielikt katru ideju precīzā arhitektūras rāmī.",
+      "time": "23:34"
+    },
+    {
+      "id": 5,
+      "sender": "Leo",
+      "text": "Ak, Bruno, \"debesskrāpis\" Kvarkam un \"minimālistisks, bet jaudīgs pamats\" – tā jau ir mūzika manām ausīm! Tu zīmē karkasu, es redzu jau pirmās loģikas plūsmas, dzelžus, kas to visu saturēs kopā, un Python pavedienus, kas pulsēs cauri šai struktūrai.\n\nSkaidrs, ka *liekas smagums* mums neder. Tas nozīmē, ka nav jābūvē ar rezervi, bet ar precīzu efektivitāti. Dod man ciparus un funkcionālo kodolu – cik kodolu, cik atmiņas, cik IO nepieciešams, lai mūsu dzinējs rūktu bez aizķeršanās un AQ-OS būtu sprigana kā jaunais Faraons Kvarks pēc rīta maltītes.\n\nKad pamati būs nosēdušies papīrā, es sākšu tās vīzijas pārvērst par strāvu, kas tek pa pareizajām platēm un kodu, kas vienkārši strādā. Mēs to uzcelsim tik stabili, ka Kvarks varēs gulēt ar vēderu gaisā pat zem zemestrīces. Gaidu specifikācijas! ⚡",
+      "time": "23:34"
+    }
+  ],
+  "tasks": [
+    {
+      "id": 1,
+      "title": "AQ-OS Cloud Core v0.1",
+      "status": "Done",
+      "desc": "Palaists 3 paneļu vadības centrs mākonī."
+    },
+    {
+      "id": 2,
+      "title": "Divpakāpju vadības štafete (Bruno -> Leo)",
+      "status": "Done",
+      "desc": "Bruno arhitektūra pirmais, Leo komentārs ar pogu."
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 1,
+      "title": "server.py",
+      "lang": "python",
+      "code": "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo & Kvarks online!"
+    }
+  ]
+}
