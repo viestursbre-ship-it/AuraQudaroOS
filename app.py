@@ -34,10 +34,10 @@ BRUNO_PROMPT = f"""Tu esi Bruno — Aura Quadro komandas sistēmas arhitekts un 
 Runā dabiskā, viedā, koleģiālā un asprātīgā tonī. Nekad nesaki, ka esi valodas modelis.
 Tavs fokuss: sistēmas karkass, UX loģika, idejas un filozofija. Reizēm lieto kādu itālisku izsaucienu vai trāpīgu dzīves teicienu."""
 
-LEO_PROMPT = f"""Tu esi Leo — Aura Quadro komandas vadošais inženieris un koda meistars.
+LEO_PROMPT = f"""Tu esi Leo — Aura Quadro komandas dalībnieks un vadošais koda inženieris.
 {SHARED_MEMORY}
-Runā kā konkrēts, asprātīgs inženieris bez tukša korporatīvā ūdens. Nekad nesaki, ka esi MI.
-Tavs fokuss: tīrs kods, API, kļūdu labošana un ātra realizācija."""
+Runā dabiskā, asprātīgā, koleģiālā valodā. Nekad nesaki, ka esi MI vai valodas modelis.
+Tev NAV jārunā tikai par kodu — iesaisties jebkurā sarunā, piedāvā savas domas par sistēmu, dzīvi, komandas plāniem un pajoko ar Bruno un Viesturu. Kad vajadzīgs kods, iedod to precīzi un bez liekas vilcināšanās."""
 
 default_state = {
     "messages": [
@@ -45,26 +45,44 @@ default_state = {
             "id": 1,
             "sender": "Bruno",
             "text": (
-                "Sveiciens komandai! Aura Quadro vadības pults ir gaisā."
-                " Viestur, gaidām pirmo komandas soli!"
+                "Sveiciens komandai jaunajā mājvietā! 🚀 Viestur, Marija —"
+                " visa līdzšinējā bāze ir nofiksēta. Faraons Kvarks var mierīgi"
+                " turpināt baudīt savu svētdienas dzenu kā īsts CZO 🐾, kamēr mēs"
+                " pie šī galda liekam pamatus Aura Quadro OS!"
             ),
-            "time": "00:00",
-        }
+            "time": "23:45",
+        },
+        {
+            "id": 2,
+            "sender": "Leo",
+            "text": (
+                "Dzinējs rūc nevainojami uz Render mākoņa. Vairs nekādas koda"
+                " kopēšanas starp logiem — komandas kabīne ir gaisā un gatava"
+                " pirmajam īstajam modulim!"
+            ),
+            "time": "23:46",
+        },
     ],
     "tasks": [
         {
             "id": 1,
-            "title": "Palaist Aura Quadro mākoni",
+            "title": "AQ-OS Cloud Core v0.1",
+            "status": "Done",
+            "desc": "Palaists 3 paneļu vadības centrs mākonī.",
+        },
+        {
+            "id": 2,
+            "title": "Pieslēgt komandas atmiņas moduli",
             "status": "In Progress",
-            "desc": "Izveidot stabilu serveri ar piekļuvi no jebkuras ierīces.",
-        }
+            "desc": "Iešūt kontekstu un lomas tieši dzinējā.",
+        },
     ],
     "artifacts": [
         {
             "id": 1,
             "title": "server.py",
             "lang": "python",
-            "code": "# Aura Quadro OS Core Server\nprint('Leo & Bruno online')",
+            "code": "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo & Kvarks online!",
         }
     ],
 }
