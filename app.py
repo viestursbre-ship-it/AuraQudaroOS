@@ -411,32 +411,38 @@ def add_message():
     user_text = data.get("text", "")
     author = data.get("sender", "Viesturs")
     
+    # 1. Saglabājam lietotāja ziņu uzreiz
     state["messages"].append({
         "id": len(state["messages"]) + 1,
         "sender": author,
         "text": user_text,
         "time": now
     })
+    save_state(state) # Saglabājam uzreiz, lai nepazūd pat pie kļūdas!
     
+    # 2. Kurš kolēģis reaģē?
     txt = user_text.lower()
-    participants = []
-    if "leo" in txt and "bruno" not in txt:
-        participants = ["Leo"]
-    elif "bruno" in txt and "leo" not in txt:
-        participants = ["Bruno"]
+    if "leo" in txt or any(w in txt for w in ["kod", "skript", "python", "bug", "kļūd", "dzinēj"]):
+        chosen = "Leo"
+    elif "bruno" in txt or any(w in txt for w in ["arhitekt", "vīzij", "plān", "domā"]):
+        chosen = "Bruno"
     else:
-        participants = ["Bruno", "Leo"]
+        # Pārmaiņus vai tas, kurš vēl nav runājis
+        last_ai = next((m["sender"] for m in reversed(state["messages"]) if m["sender"] in ["Bruno", "Leo"]), "Leo")
+        chosen = "Bruno" if last_ai == "Leo" else "Leo"
         
-    for colleague in participants:
-        reply = ask_colleague(colleague, user_text)
+    try:
+        reply = ask_colleague(chosen, user_text)
         state["messages"].append({
             "id": len(state["messages"]) + 1,
-            "sender": colleague,
+            "sender": chosen,
             "text": reply,
             "time": datetime.now().strftime("%H:%M")
         })
+        save_state(state)
+    except Exception as e:
+        print(f"Kļūda ģenerējot atbildi: {e}")
         
-    save_state(state)
     return jsonify({"status": "ok"})
 
 @app.route('/api/task', methods=['POST'])
