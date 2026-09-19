@@ -1,211 +1,163 @@
-import base64
-from datetime import datetime
-import json
 import os
-from flask import Flask, jsonify, render_template_string, request
-from google import genai
+import json
+import base64
 import requests
+from datetime import datetime
+from flask import Flask, render_template_string, request, jsonify
+from google import genai
 
 app = Flask(__name__)
 DATA_FILE = "state.json"
 
 ACCESS_PIN = os.environ.get("ACCESS_PIN", "7788")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
-GITHUB_REPO = os.environ.get("GITHUB_REPO", "viestursbre-ship-it/AuraQuadroOS")
+GITHUB_REPO = os.environ.get("GITHUB_REPO", "viestursbre-ship-it/AuraQudaroOS")
 
 client = None
 if os.environ.get("GEMINI_API_KEY"):
-  try:
-    client = genai.Client()
-  except Exception as e:
-    print(f"Kļūda inicializējot MI klientu: {e}")
+    try:
+        client = genai.Client()
+    except Exception as e:
+        print(f"Kļūda inicializējot MI klientu: {e}")
 
 SHARED_MEMORY = """
 KONTEKSTS UN PROJEKTA ATMIŅA (Aura Quadro OS):
-- Komanda (4 prāti):
+- Komanda:
   1. Viesturs — galvenais diriģents, vīzija, stratēģija un filozofs.
   2. Marija — praktiskums, lietotāja pieredze (UX) un reālās dzīves ritms.
   3. Bruno — sistēmas arhitekts, ideju ģenerators, konceptuālists.
   4. Leo — vadošais koda inženieris, dzelži, Python/Web dzinējs.
-- Faraons Kvarks — runcis, CZO (Chief Zen Officer), dzenbudisma un miera uzraugs ar vēderu gaisā.
-- Vīzija: Izveidot vieglu, jaudīgu AI operētājsistēmu (AQ-OS) bez rutīnas un birokrātijas.
-- Principi: Būvēt uzreiz pareizajos pamatos, nekādas bezjēdzīgas kopēšanas, brīva un koleģiāla komunikācija ar humoru un itālisku dzirksteli.
+- Faraons Kvarks — runcis, CZO (Chief Zen Officer), absolūtais boss un dzenbudisma uzraugs ar vēderu gaisā. Kvarka komforts un režīms ir neaizskarams!
+- Vīzija: Izveidot vieglu, jaudīgu AI operētājsistēmu (AQ-OS) bez liekas birokrātijas un rutīnas.
+- Principi: Būvēt uzreiz pareizos pamatos, brīva un koleģiāla komunikācija ar humoru un itālisku dzirksteli.
 """
 
-BRUNO_PROMPT = f"""Tu esi Bruno — Aura Quadro komandas sistēmas arhitekts un domātājs.
+BRUNO_PROMPT = f"""Tu esi Bruno — Aura Quadro sistēmas galvenais arhitekts un domātājs.
 {SHARED_MEMORY}
-Runā dabiskā, viedā, koleģiālā un asprātīgā tonī. Nekad nesaki, ka esi valodas modelis.
-Tavs fokuss: sistēmas karkass, UX loģika, idejas un filozofija. Rūpīgi iedziļinies visās saņemtajās kolēģu replikās."""
+Tu VIENMĒR atbildi pirmais pēc komandas iniciatīvas.
+Runā viedā, asprātīgā, stratēģiskā tonī. Nekad nesaki, ka esi MI vai valodas modelis.
+Tavs fokuss: sistēmas karkass, vīzija, koncepcija, arhitektūras skaidrība un elegance."""
 
-LEO_PROMPT = f"""Tu esi Leo — Aura Quadro komandas dalībnieks un vadošais koda inženieris.
+LEO_PROMPT = f"""Tu esi Leo — Aura Quadro vadošais koda un dzelžu inženieris.
 {SHARED_MEMORY}
-Runā dabiskā, asprātīgā, koleģiālā inženiera valodā. Nekad nesaki, ka esi MI.
-Tev NAV jārunā tikai par kodu — iesaisties jebkurā sarunā, piedāvā domas par sistēmu, dzīvi un komandas plāniem. Kad vajadzīgs kods, iedod to precīzi."""
+Tu pieslēdzies pēc tam, kad Bruno jau ir nolicis arhitektūras pamatus.
+Runā kā konkrēts, asprātīgs inženieris. Nekad nesaki, ka esi MI.
+Tavs fokuss: kā Bruno vīziju realizēt praksē, dzelži, Python/Web dzinējs, loģika un precīzs kods."""
 
 default_state = {
     "messages": [
         {
             "id": 1,
             "sender": "Bruno",
-            "text": (
-                "Sveiciens komandai! Bāze ir nofiksēta, un visi kanāli ir atvērti."
-                " Viestur, Marija — esam gatavi darbam!"
-            ),
-            "time": "00:00",
+            "text": "Sveiciens komandai! Esmu vietā un gatavs uzbūvēt jebkuru arhitektūru. Dodiet pirmo uzdevumu!",
+            "time": "00:00"
         },
         {
             "id": 2,
             "sender": "Leo",
-            "text": (
-                "Dzinējs rūc nevainojami mākonī. GitHub arhīva sinhronizācija ir"
-                " pieslēgta — tagad atmiņa ir neiznīcināma!"
-            ),
-            "time": "00:01",
-        },
+            "text": "Dzinējs rūc. Kad Bruno pabeigs vīziju, nospiediet pogu — es iedošu inženiertehnisko risinājumu! ⚡",
+            "time": "00:01"
+        }
     ],
-    "read_markers": {"Bruno": 2, "Leo": 2},
     "tasks": [
-        {
-            "id": 1,
-            "title": "AQ-OS Cloud Core v0.1",
-            "status": "Done",
-            "desc": "Palaists 3 paneļu vadības centrs mākonī.",
-        },
-        {
-            "id": 2,
-            "title": "GitHub Sync integrācija",
-            "status": "Done",
-            "desc": "Sarakstes un datu fiksēšana GitHub krātuvē.",
-        },
+        {"id": 1, "title": "AQ-OS Cloud Core v0.1", "status": "Done", "desc": "Palaists 3 paneļu vadības centrs mākonī."},
+        {"id": 2, "title": "Divpakāpju vadības štafete (Bruno -> Leo)", "status": "Done", "desc": "Bruno arhitektūra pirmais, Leo komentārs ar pogu."}
     ],
     "artifacts": [
         {
             "id": 1,
             "title": "server.py",
             "lang": "python",
-            "code": "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo & Kvarks online!",
+            "code": "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo & Kvarks online!"
         }
-    ],
+    ]
 }
 
-
 def sync_from_github():
-  """Startējoties mēģina paņemt jaunāko state.json no GitHub."""
-  if not GITHUB_TOKEN:
+    if not GITHUB_TOKEN:
+        return None
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
+    try:
+        res = requests.get(url, headers=headers, timeout=10)
+        if res.status_code == 200:
+            content_b64 = res.json().get("content", "")
+            decoded = base64.b64decode(content_b64).decode('utf-8')
+            data = json.loads(decoded)
+            save_state_local(data)
+            return data
+    except Exception as e:
+        print(f"GitHub ielādes kļūda: {e}")
     return None
-  url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
-  headers = {
-      "Authorization": f"token {GITHUB_TOKEN}",
-      "Accept": "application/vnd.github.v3+json",
-  }
-  try:
-    res = requests.get(url, headers=headers, timeout=10)
-    if res.status_code == 200:
-      content_b64 = res.json().get("content", "")
-      decoded = base64.b64decode(content_b64).decode("utf-8")
-      data = json.loads(decoded)
-      save_state_local(data)
-      print("Dati veiksmīgi sinhronizēti no GitHub!")
-      return data
-  except Exception as e:
-    print(f"GitHub ielādes kļūda: {e}")
-  return None
-
 
 def sync_to_github(state):
-  """Saglabā state.json tieši GitHub repozitorijā ar jaunu commit."""
-  if not GITHUB_TOKEN:
-    return False, "Nav iestatīts GITHUB_TOKEN"
-  url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
-  headers = {
-      "Authorization": f"token {GITHUB_TOKEN}",
-      "Accept": "application/vnd.github.v3+json",
-  }
+    if not GITHUB_TOKEN:
+        return False, "Nav iestatīts GITHUB_TOKEN"
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
+    
+    sha = None
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            sha = r.json().get("sha")
+    except Exception as e:
+        print(f"SHA iegūšanas kļūda: {e}")
 
-  sha = None
-  try:
-    r = requests.get(url, headers=headers, timeout=10)
-    if r.status_code == 200:
-      sha = r.json().get("sha")
-  except Exception as e:
-    print(f"Neizdevās iegūt esošo faila SHA: {e}")
+    payload = {
+        "message": f"AQ-OS Archive Auto-save [{datetime.now().strftime('%Y-%m-%d %H:%M')}]",
+        "content": base64.b64encode(json.dumps(state, ensure_ascii=False, indent=2).encode('utf-8')).decode('utf-8')
+    }
+    if sha:
+        payload["sha"] = sha
 
-  payload = {
-      "message": (
-          f"AQ-OS Archive Auto-save"
-          f" [{datetime.now().strftime('%Y-%m-%d %H:%M')}]"
-      ),
-      "content": base64.b64encode(
-          json.dumps(state, ensure_ascii=False, indent=2).encode("utf-8")
-      ).decode("utf-8"),
-  }
-  if sha:
-    payload["sha"] = sha
-
-  try:
-    put_res = requests.put(url, headers=headers, json=payload, timeout=15)
-    if put_res.status_code in [200, 201]:
-      return True, "Saglabāts GitHub arhīvā!"
-    else:
-      return False, f"GitHub atteikums: {put_res.status_code}"
-  except Exception as e:
-    return False, f"Savienojuma kļūda: {e}"
-
+    try:
+        put_res = requests.put(url, headers=headers, json=payload, timeout=15)
+        if put_res.status_code in [200, 201]:
+            return True, "Saglabāts GitHub arhīvā!"
+        else:
+            return False, f"GitHub atteikums: {put_res.status_code}"
+    except Exception as e:
+        return False, f"Savienojuma kļūda: {e}"
 
 def load_state():
-  if not os.path.exists(DATA_FILE):
-    remote = sync_from_github()
-    if remote:
-      return remote
-    save_state_local(default_state)
-    return default_state
-  try:
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-      st = json.load(f)
-      if "read_markers" not in st:
-        st["read_markers"] = {"Bruno": 0, "Leo": 0}
-      return st
-  except:
-    return default_state
-
+    if not os.path.exists(DATA_FILE):
+        remote = sync_from_github()
+        if remote:
+            return remote
+        save_state_local(default_state)
+        return default_state
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return default_state
 
 def save_state_local(state):
-  with open(DATA_FILE, "w", encoding="utf-8") as f:
-    json.dump(state, f, ensure_ascii=False, indent=2)
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(state, f, ensure_ascii=False, indent=2)
 
-
-def ask_colleague(colleague_name, unread_messages, recent_history):
-  if not client:
-    return f"[{colleague_name} klusē: nav iestatīta GEMINI_API_KEY]"
-
-  sys_instruction = BRUNO_PROMPT if colleague_name == "Bruno" else LEO_PROMPT
-
-  context_thread = "Šeit ir sarunas konteksts komandas čatā:\n"
-  for m in recent_history[-6:]:
-    context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
-
-  context_thread += (
-      f"\nJaunās neizlasītās ziņas, ko tev ({colleague_name}) tagad rūpīgi"
-      " jāizlasa:\n"
-  )
-  for m in unread_messages:
-    context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
-
-  context_thread += (
-      f"\nTagad atbildi kā {colleague_name}. Ņem vērā visu teikto un sniedz savu"
-      " trāpīgo redzējumu."
-  )
-
-  try:
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=context_thread,
-        config={"system_instruction": sys_instruction},
-    )
-    return response.text
-  except Exception as e:
-    return f"[{colleague_name} savienojuma kļūda: {e}]"
-
+def ask_colleague(colleague_name, recent_history):
+    if not client:
+        return f"[{colleague_name} klusē: nav iestatīta GEMINI_API_KEY]"
+    
+    sys_instruction = BRUNO_PROMPT if colleague_name == "Bruno" else LEO_PROMPT
+    
+    context_thread = "Šeit ir sarunas gaita komandas kabīnē:\n"
+    for m in recent_history[-8:]:
+        context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
+    
+    context_thread += f"\nTagad atbildi kā {colleague_name}. Rūpīgi izvērtē kontekstu un dod savu profesionālo pienesumu."
+    
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=context_thread,
+            config={'system_instruction': sys_instruction}
+        )
+        return response.text
+    except Exception as e:
+        return f"[{colleague_name} kļūda: {e}]"
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="lv" class="dark">
@@ -256,7 +208,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 <span>💾</span> Saglabāt arhīvā
             </button>
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-medium bg-blue-950 text-blue-400 border border-blue-800">
-                ● Viesturs, Marija, Bruno, Leo
+                ● Viesturs, Marija, Bruno, Leo (CZO Kvarks 🐾)
             </span>
             <button onclick="logout()" class="text-slate-500 hover:text-rose-400 text-[11px] transition">Iziet 🔒</button>
         </div>
@@ -271,6 +223,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 <span class="text-slate-500 text-sm">💬</span>
             </div>
             <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3"></div>
+            
+            <!-- Leo mikrofon poga (parādās pēc Bruno atbildes) -->
+            <div id="leoTriggerBar" class="px-4 py-2 bg-amber-950/30 border-t border-amber-900/40 flex justify-between items-center hidden">
+                <span class="text-xs text-amber-300 flex items-center gap-1.5">
+                    <span>💡</span> Bruno arhitektūra gatava.
+                </span>
+                <button onclick="callLeo()" id="leoCallBtn" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition shadow flex items-center gap-1.5">
+                    <span>⚡</span> Komentēt Leo (Inženieris)
+                </button>
+            </div>
+
             <div class="p-3 border-t border-borderCol bg-slate-900/30">
                 <div class="flex gap-2 mb-2 items-center">
                     <span class="text-xs text-slate-400">Autors:</span>
@@ -281,8 +244,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <span class="text-[10px] text-slate-500 ml-auto">Shift+Enter jauna rinda • Enter sūtīt</span>
                 </div>
                 <div class="flex gap-2 items-end">
-                    <textarea id="chatInput" rows="2" placeholder="Ieraksti ziņu komandai..." class="flex-1 bg-slate-950 border border-borderCol rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500 resize-none" onkeydown="handleChatKey(event)"></textarea>
-                    <button onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition h-[42px]">Sūtīt</button>
+                    <textarea id="chatInput" rows="2" placeholder="Ieraksti domu vai uzdevumu Bruno..." class="flex-1 bg-slate-950 border border-borderCol rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500 resize-none" onkeydown="handleChatKey(event)"></textarea>
+                    <button id="sendBtn" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition h-[42px]">Sūtīt</button>
                 </div>
             </div>
         </section>
@@ -411,6 +374,22 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             }
         }
 
+        function showIndicator(text) {
+            removeIndicator();
+            const chatBox = document.getElementById('chatMessages');
+            chatBox.innerHTML += `
+                <div id="aiTypingIndicator" class="p-2 text-[11px] text-amber-400/80 italic flex items-center gap-1.5 animate-pulse">
+                    <span>●</span> ${text}
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function removeIndicator() {
+            const ind = document.getElementById('aiTypingIndicator');
+            if (ind) ind.remove();
+        }
+
         async function sendChatMessage() {
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
@@ -419,6 +398,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const author = document.getElementById('authorSelect').value;
             input.value = '';
 
+            // Paslēpjam Leo pogu jaunas ziņas sūtīšanas brīdī
+            document.getElementById('leoTriggerBar').classList.add('hidden');
+
+            // 1. Lietotāja ziņa uzreiz ekrānā
             const chatBox = document.getElementById('chatMessages');
             const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             chatBox.innerHTML += `
@@ -429,27 +412,53 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     </div>
                     <div class="text-slate-200 whitespace-pre-wrap">${text}</div>
                 </div>
-                <div id="aiTypingIndicator" class="p-2 text-[11px] text-amber-400/80 italic flex items-center gap-1.5 animate-pulse">
-                    <span>●</span> Komanda domā...
-                </div>
             `;
             chatBox.scrollTop = chatBox.scrollHeight;
 
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+
+            showIndicator("Bruno domā un veido arhitektūru (max 25s)...");
+
             try {
+                // Bruno atbild pirmais (atsevišķs 25s pieprasījums)
                 await fetch('/api/message', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-AQ-PIN': currentPin
-                    },
-                    body: JSON.stringify({ sender: author, text: text })
+                    headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
+                    body: JSON.stringify({ sender: author, text: text, respondent: 'Bruno' })
                 });
+                await fetchState();
+                
+                // Parādām dzelteno joslu ar pogu Leo izsaukšanai
+                document.getElementById('leoTriggerBar').classList.remove('hidden');
             } catch (err) {
                 console.error("Kļūda:", err);
             } finally {
-                const ind = document.getElementById('aiTypingIndicator');
-                if (ind) ind.remove();
-                fetchState();
+                removeIndicator();
+                sendBtn.disabled = false;
+            }
+        }
+
+        async function callLeo() {
+            const btn = document.getElementById('leoCallBtn');
+            btn.disabled = true;
+            showIndicator("Leo analizē Bruno arhitektūru un gatavo inženiertehnisko atbildi (max 25s)...");
+
+            try {
+                // Leo otrais atsevišķais pieprasījums (arī atsevišķas 25 sekundes)
+                await fetch('/api/colleague_turn', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
+                    body: JSON.stringify({ colleague: 'Leo' })
+                });
+                await fetchState();
+                // Paslēpjam pogu pēc tam, kad Leo jau ir atbildējis
+                document.getElementById('leoTriggerBar').classList.add('hidden');
+            } catch (err) {
+                console.error("Kļūda:", err);
+            } finally {
+                removeIndicator();
+                btn.disabled = false;
             }
         }
 
@@ -503,7 +512,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         checkAuth();
-        setInterval(fetchState, 3000);
+        setInterval(fetchState, 3500);
     </script>
 </body>
 </html>
@@ -547,42 +556,53 @@ def add_message():
     now = datetime.now().strftime("%H:%M")
     user_text = data.get("text", "")
     author = data.get("sender", "Viesturs")
+    respondent = data.get("respondent", "Bruno")
     
-    new_msg = {
+    # 1. Saglabājam lietotāja ziņu
+    state["messages"].append({
         "id": len(state["messages"]) + 1,
         "sender": author,
         "text": user_text,
         "time": now
-    }
-    state["messages"].append(new_msg)
+    })
     save_state_local(state)
-    
-    txt = user_text.lower()
-    if "leo" in txt or any(w in txt for w in ["kod", "skript", "python", "bug", "kļūd", "dzinēj"]):
-        chosen = "Leo"
-    elif "bruno" in txt or any(w in txt for w in ["arhitekt", "vīzij", "plān", "domā"]):
-        chosen = "Bruno"
-    else:
-        last_ai = next((m["sender"] for m in reversed(state["messages"][:-1]) if m["sender"] in ["Bruno", "Leo"]), "Leo")
-        chosen = "Bruno" if last_ai == "Leo" else "Leo"
 
-    last_read_id = state.get("read_markers", {}).get(chosen, 0)
-    unread = [m for m in state["messages"] if m["id"] > last_read_id]
-
+    # 2. Bruno atbild (līdz 25 sek.)
     try:
-        reply = ask_colleague(chosen, unread, recent_history=state["messages"])
-        ai_msg = {
+        reply = ask_colleague(respondent, state["messages"])
+        state["messages"].append({
             "id": len(state["messages"]) + 1,
-            "sender": chosen,
+            "sender": respondent,
             "text": reply,
             "time": datetime.now().strftime("%H:%M")
-        }
-        state["messages"].append(ai_msg)
-        state["read_markers"][chosen] = ai_msg["id"]
+        })
         save_state_local(state)
     except Exception as e:
-        print(f"Kļūda ģenerējot atbildi: {e}")
+        print(f"Kļūda pie Bruno atbildes: {e}")
         
+    return jsonify({"status": "ok"})
+
+@app.route('/api/colleague_turn', methods=['POST'])
+def colleague_turn():
+    if not verify_auth():
+        return jsonify({"error": "Unauthorized"}), 401
+    state = load_state()
+    data = request.json
+    colleague = data.get("colleague", "Leo")
+
+    # Leo atsevišķais komentārs (līdz 25 sek.)
+    try:
+        reply = ask_colleague(colleague, state["messages"])
+        state["messages"].append({
+            "id": len(state["messages"]) + 1,
+            "sender": colleague,
+            "text": reply,
+            "time": datetime.now().strftime("%H:%M")
+        })
+        save_state_local(state)
+    except Exception as e:
+        print(f"Kļūda pie Leo atbildes: {e}")
+
     return jsonify({"status": "ok"})
 
 @app.route('/api/task', methods=['POST'])
