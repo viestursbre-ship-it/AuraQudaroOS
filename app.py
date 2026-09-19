@@ -276,35 +276,46 @@ def get_state():
 
 @app.route('/api/message', methods=['POST'])
 def add_message():
-    state = load_state()
-    data = request.json
-    now = datetime.now().strftime("%H:%M")
-    user_text = data.get("text", "")
-    author = data.get("sender", "Viesturs")
-    
-    # 1. Lietotāja ziņa
-    state["messages"].append({
-        "id": len(state["messages"]) + 1,
-        "sender": author,
-        "text": user_text,
-        "time": now
-    })
-    
-    # 2. Kurš kolēģis atbild?
-    # Ja pieminēts kods, kļūdas, skripts -> Leo. Citādi -> Bruno (arhitekts)
-    target = "Leo" if any(w in user_text.lower() for w in ["kod", "skript", "python", "bug", "kļūd", "api"]) else "Bruno"
-    
-    reply = ask_colleague(target, user_text)
-    state["messages"].append({
-        "id": len(state["messages"]) + 1,
-        "sender": target,
-        "text": reply,
-        "time": datetime.now().strftime("%H:%M")
-    })
-    
-    save_state(state)
-    return jsonify({"status": "ok"})
+  state = load_state()
+  data = request.json
+  now = datetime.now().strftime('%H:%M')
+  user_text = data.get('text', '')
+  author = data.get('sender', 'Viesturs')
 
+  # 1. Pievienojam Viestura vai Marijas ziņu
+  state['messages'].append({
+      'id': len(state['messages']) + 1,
+      'sender': author,
+      'text': user_text,
+      'time': now,
+  })
+
+  txt = user_text.lower()
+
+  # 2. Nosakām, kuri kolēģi piedalās sarunā:
+  participants = []
+  if 'leo' in txt and 'bruno' not in txt:
+    participants = ['Leo']
+  elif 'bruno' in txt and 'leo' not in txt:
+    participants = ['Bruno']
+  else:
+    # Ja runā ar visu komandu vai nav konkrēta vārda:
+    # Abi pieslēdzas brīvā diskusijā — Bruno ar skatu, Leo ar inženiera tvērienu!
+    participants = ['Bruno', 'Leo']
+
+  # 3. Ģenerējam atbildes
+  for colleague in participants:
+    # Īpaša instrukcija Leo, lai neiespringst tikai uz kodu:
+    reply = ask_colleague(colleague, user_text)
+    state['messages'].append({
+        'id': len(state['messages']) + 1,
+        'sender': colleague,
+        'text': reply,
+        'time': datetime.now().strftime('%H:%M'),
+    })
+
+  save_state(state)
+  return jsonify({'status': 'ok'})
 @app.route('/api/task', methods=['POST'])
 def add_task():
     state = load_state()
