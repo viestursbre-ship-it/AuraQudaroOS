@@ -8,7 +8,7 @@ app = Flask(__name__)
 DATA_FILE = "state.json"
 
 # --- KOMANDAS DROŠĪBAS PIN ---
-ACCESS_PIN = os.environ.get("ACCESS_PIN", "7788")  # Noklusējuma PIN: 7788
+ACCESS_PIN = os.environ.get("ACCESS_PIN", "7788")
 
 # Inicializējam Google AI klientu
 client = None
@@ -173,7 +173,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
     <!-- Main Workspace: 3 Columns -->
     <main class="flex-1 grid grid-cols-12 gap-4 p-4 min-h-0">
-        <!-- The Core -->
+        <!-- 1. The Core -->
         <section class="col-span-5 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
             <div class="px-4 py-3 border-b border-borderCol bg-slate-900/50 flex justify-between items-center">
                 <span class="font-semibold text-xs uppercase tracking-wider text-slate-400">1. The Core (Kopējā Plūsma)</span>
@@ -195,7 +195,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             </div>
         </section>
 
-        <!-- Intent / Tasks -->
+        <!-- 2. Intent / Tasks -->
         <section class="col-span-3 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
             <div class="px-4 py-3 border-b border-borderCol bg-slate-900/50 flex justify-between items-center">
                 <span class="font-semibold text-xs uppercase tracking-wider text-slate-400">2. Intent / Uzdevumi</span>
@@ -207,7 +207,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div id="taskList" class="flex-1 p-3 overflow-y-auto space-y-2"></div>
         </section>
 
-        <!-- Artifacts -->
+        <!-- 3. Artifacts -->
         <section class="col-span-4 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
             <div class="px-4 py-3 border-b border-borderCol bg-slate-900/50 flex justify-between items-center">
                 <span class="font-semibold text-xs uppercase tracking-wider text-slate-400">3. Kods & Moduļi</span>
@@ -222,14 +222,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         </section>
     </main>
 
-  
-
-def verify_auth():
-    pin = request.headers.get("X-AQ-PIN")
-    return pin == ACCESS_PIN
-
-
-<script>
+    <script>
         let currentPin = localStorage.getItem('aq_pin') || '';
 
         function checkAuth() {
@@ -327,7 +320,6 @@ def verify_auth():
             const author = document.getElementById('authorSelect').value;
             input.value = '';
 
-            // Optimistic UI: uzreiz parādām ziņu ekrānā un indikatoru
             const chatBox = document.getElementById('chatMessages');
             const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             chatBox.innerHTML += `
@@ -354,7 +346,7 @@ def verify_auth():
                     body: JSON.stringify({ sender: author, text: text })
                 });
             } catch (err) {
-                console.error("Kļūda nosūtot:", err);
+                console.error("Kļūda:", err);
             } finally {
                 const ind = document.getElementById('aiTypingIndicator');
                 if (ind) ind.remove();
@@ -390,6 +382,10 @@ def verify_auth():
 </html>
 """
 
+def verify_auth():
+    pin = request.headers.get("X-AQ-PIN")
+    return pin == ACCESS_PIN
+
 @app.route('/')
 def index():
     return render_template_string(HTML_TEMPLATE)
@@ -415,7 +411,6 @@ def add_message():
     user_text = data.get("text", "")
     author = data.get("sender", "Viesturs")
     
-    # 1. Lietotāja ziņa
     state["messages"].append({
         "id": len(state["messages"]) + 1,
         "sender": author,
