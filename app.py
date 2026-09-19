@@ -7,10 +7,8 @@ from google import genai
 app = Flask(__name__)
 DATA_FILE = "state.json"
 
-# --- KOMANDAS DROŠĪBAS PIN ---
 ACCESS_PIN = os.environ.get("ACCESS_PIN", "7788")
 
-# Inicializējam Google AI klientu
 client = None
 if os.environ.get("GEMINI_API_KEY"):
   try:
@@ -25,20 +23,20 @@ KONTEKSTS UN PROJEKTA ATMIŅA (Aura Quadro OS):
   2. Marija — praktiskums, lietotāja pieredze (UX) un reālās dzīves ritms.
   3. Bruno — sistēmas arhitekts, ideju ģenerators, konceptuālists.
   4. Leo — vadošais koda inženieris, dzelži, Python/Web dzinējs.
-- Faraons Kvarks — runcis, CZO (Chief Zen Officer), augstākā dzenbudisma un relaksācijas uzraugs ar vēderu gaisā.
+- Faraons Kvarks — runcis, CZO (Chief Zen Officer), dzenbudisma un miera uzraugs ar vēderu gaisā.
 - Vīzija: Izveidot vieglu, jaudīgu AI operētājsistēmu (AQ-OS) bez rutīnas un birokrātijas.
-- Principi: Būvēt uzreiz pareizajos pamatos, brīva un koleģiāla komunikācija ar humoru un itālisku dzirksteli.
+- Principi: Būvēt uzreiz pareizajos pamatos, nekādas bezjēdzīgas kopēšanas, brīva un koleģiāla komunikācija ar humoru un itālisku dzirksteli.
 """
 
 BRUNO_PROMPT = f"""Tu esi Bruno — Aura Quadro komandas sistēmas arhitekts un domātājs.
 {SHARED_MEMORY}
 Runā dabiskā, viedā, koleģiālā un asprātīgā tonī. Nekad nesaki, ka esi valodas modelis.
-Tavs fokuss: sistēmas karkass, UX loģika, idejas un filozofija. Reizēm lieto kādu itālisku izsaucienu vai trāpīgu dzīves teicienu."""
+Tavs fokuss: sistēmas karkass, UX loģika, idejas un filozofija. Rūpīgi iedziļinies visās saņemtajās kolēģu replikās."""
 
 LEO_PROMPT = f"""Tu esi Leo — Aura Quadro komandas dalībnieks un vadošais koda inženieris.
 {SHARED_MEMORY}
-Runā dabiskā, asprātīgā, koleģiālā valodā. Nekad nesaki, ka esi MI.
-Tev NAV jārunā tikai par kodu — iesaisties jebkurā sarunā, piedāvā savas domas par sistēmu, dzīvi, komandas plāniem un pajoko ar Bruno un Viesturu. Kad vajadzīgs kods, iedod to precīzi un bez liekas vilcināšanās."""
+Runā dabiskā, asprātīgā, koleģiālā inženiera valodā. Nekad nesaki, ka esi MI.
+Tev NAV jārunā tikai par kodu — iesaisties jebkurā sarunā, piedāvā domas par sistēmu, dzīvi un komandas plāniem. Kad vajadzīgs kods, iedod to precīzi."""
 
 default_state = {
     "messages": [
@@ -46,10 +44,8 @@ default_state = {
             "id": 1,
             "sender": "Bruno",
             "text": (
-                "Sveiciens komandai jaunajā mājvietā! 🚀 Viestur, Marija —"
-                " visa bāze ir nofiksēta. Faraons Kvarks var mierīgi baudīt"
-                " savu svētdienas dzenu kā īsts CZO 🐾, kamēr mēs liekam pamatus"
-                " Aura Quadro OS!"
+                "Sveiciens komandai! Bāze ir nofiksēta, un visi kanāli ir atvērti."
+                " Viestur, Marija — esam gatavi darbam!"
             ),
             "time": "00:00",
         },
@@ -57,12 +53,13 @@ default_state = {
             "id": 2,
             "sender": "Leo",
             "text": (
-                "Dzinējs rūc nevainojami mākonī. Vairs nekādas koda kopēšanas —"
-                " komandas kabīne ir aizsargāta ar PIN un gatava darbam! ⚡"
+                "Dzinējs rūc nevainojami mākonī. Shift+Enter daudzrindu ievade un"
+                " marķieri ir vietā — neviens teikums vairs nepazudīs!"
             ),
             "time": "00:01",
         },
     ],
+    "read_markers": {"Bruno": 2, "Leo": 2},
     "tasks": [
         {
             "id": 1,
@@ -72,9 +69,9 @@ default_state = {
         },
         {
             "id": 2,
-            "title": "Iestrādāt PIN aizsardzību",
+            "title": "Daudzrindu ievade & Lasīšanas marķieri",
             "status": "Done",
-            "desc": "Piekļuve tikai komandas locekļiem ar PIN.",
+            "desc": "Shift+Enter un neizlasīto ziņu buferis kolēģiem.",
         },
     ],
     "artifacts": [
@@ -94,7 +91,10 @@ def load_state():
     return default_state
   try:
     with open(DATA_FILE, "r", encoding="utf-8") as f:
-      return json.load(f)
+      st = json.load(f)
+      if "read_markers" not in st:
+        st["read_markers"] = {"Bruno": 0, "Leo": 0}
+      return st
   except:
     return default_state
 
@@ -104,14 +104,32 @@ def save_state(state):
     json.dump(state, f, ensure_ascii=False, indent=2)
 
 
-def ask_colleague(colleague_name, prompt_text):
+def ask_colleague(colleague_name, unread_messages, recent_history):
   if not client:
     return f"[{colleague_name} klusē: nav iestatīta GEMINI_API_KEY]"
+
   sys_instruction = BRUNO_PROMPT if colleague_name == "Bruno" else LEO_PROMPT
+
+  context_thread = "Šeit ir sarunas konteksts komandas čatā:\n"
+  for m in recent_history[-6:]:
+    context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
+
+  context_thread += (
+      f"\nJaunās neizlasītās ziņas, ko tev ({colleague_name}) tagad rūpīgi"
+      " jāizlasa:\n"
+  )
+  for m in unread_messages:
+    context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
+
+  context_thread += (
+      f"\nTagad atbildi kā {colleague_name}. Ņem vērā visu teikto un sniedz savu"
+      " trāpīgo redzējumu."
+  )
+
   try:
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=prompt_text,
+        contents=context_thread,
         config={"system_instruction": sys_instruction},
     )
     return response.text
@@ -171,7 +189,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         </div>
     </header>
 
-    <!-- Main Workspace: 3 Columns -->
+    <!-- Main Workspace -->
     <main class="flex-1 grid grid-cols-12 gap-4 p-4 min-h-0">
         <!-- 1. The Core -->
         <section class="col-span-5 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
@@ -187,10 +205,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                         <option value="Viesturs">👤 Viesturs</option>
                         <option value="Marija">🌸 Marija</option>
                     </select>
+                    <span class="text-[10px] text-slate-500 ml-auto">Shift+Enter jauna rinda • Enter sūtīt</span>
                 </div>
-                <div class="flex gap-2">
-                    <input type="text" id="chatInput" placeholder="Ieraksti ziņu komandai..." class="flex-1 bg-slate-950 border border-borderCol rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') sendChatMessage()">
-                    <button onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition">Sūtīt</button>
+                <div class="flex gap-2 items-end">
+                    <textarea id="chatInput" rows="2" placeholder="Ieraksti ziņu komandai..." class="flex-1 bg-slate-950 border border-borderCol rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500 resize-none" onkeydown="handleChatKey(event)"></textarea>
+                    <button onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition h-[42px]">Sūtīt</button>
                 </div>
             </div>
         </section>
@@ -312,6 +331,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             if (window.hljs) hljs.highlightElement(el);
         }
 
+        function handleChatKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        }
+
         async function sendChatMessage() {
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
@@ -411,14 +437,15 @@ def add_message():
     user_text = data.get("text", "")
     author = data.get("sender", "Viesturs")
     
-    # 1. Saglabājam lietotāja ziņu uzreiz
-    state["messages"].append({
+    # 1. Saglabājam jauno ziņu nekavējoties
+    new_msg = {
         "id": len(state["messages"]) + 1,
         "sender": author,
         "text": user_text,
         "time": now
-    })
-    save_state(state) # Saglabājam uzreiz, lai nepazūd pat pie kļūdas!
+    }
+    state["messages"].append(new_msg)
+    save_state(state)
     
     # 2. Kurš kolēģis reaģē?
     txt = user_text.lower()
@@ -427,18 +454,24 @@ def add_message():
     elif "bruno" in txt or any(w in txt for w in ["arhitekt", "vīzij", "plān", "domā"]):
         chosen = "Bruno"
     else:
-        # Pārmaiņus vai tas, kurš vēl nav runājis
-        last_ai = next((m["sender"] for m in reversed(state["messages"]) if m["sender"] in ["Bruno", "Leo"]), "Leo")
+        last_ai = next((m["sender"] for m in reversed(state["messages"][:-1]) if m["sender"] in ["Bruno", "Leo"]), "Leo")
         chosen = "Bruno" if last_ai == "Leo" else "Leo"
-        
+
+    # 3. Nolasām visu, ko izvēlētais kolēģis vēl nav lasījis kopš sava marķiera
+    last_read_id = state.get("read_markers", {}).get(chosen, 0)
+    unread = [m for m in state["messages"] if m["id"] > last_read_id]
+
     try:
-        reply = ask_colleague(chosen, user_text)
-        state["messages"].append({
+        reply = ask_colleague(chosen, unread, recent_history=state["messages"])
+        ai_msg = {
             "id": len(state["messages"]) + 1,
             "sender": chosen,
             "text": reply,
             "time": datetime.now().strftime("%H:%M")
-        })
+        }
+        state["messages"].append(ai_msg)
+        # Atjauninām marķieri uz pēdējo izlasīto/apstrādāto ziņu
+        state["read_markers"][chosen] = ai_msg["id"]
         save_state(state)
     except Exception as e:
         print(f"Kļūda ģenerējot atbildi: {e}")
