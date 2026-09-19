@@ -522,6 +522,167 @@ def verify_auth():
 </html>
 """
 
+<script>
+        let currentPin = localStorage.getItem('aq_pin') || '';
+
+        function checkAuth() {
+            if (!currentPin) {
+                document.getElementById('pinModal').classList.remove('hidden');
+                document.getElementById('pinInput').focus();
+            } else {
+                document.getElementById('pinModal').classList.add('hidden');
+                fetchState();
+            }
+        }
+
+        async function submitPin() {
+            const val = document.getElementById('pinInput').value.trim();
+            const res = await fetch('/api/verify', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ pin: val })
+            });
+            const data = await res.json();
+            if (data.valid) {
+                currentPin = val;
+                localStorage.setItem('aq_pin', currentPin);
+                document.getElementById('pinModal').classList.add('hidden');
+                document.getElementById('pinError').classList.add('hidden');
+                fetchState();
+            } else {
+                document.getElementById('pinError').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('aq_pin');
+            location.reload();
+        }
+
+        async function fetchState() {
+            if (!currentPin) return;
+            const res = await fetch('/api/state', {
+                headers: { 'X-AQ-PIN': currentPin }
+            });
+            if (res.status === 401) {
+                logout();
+                return;
+            }
+            const data = await res.json();
+            renderChat(data.messages);
+            renderTasks(data.tasks);
+            renderArtifact(data.artifacts[0]);
+        }
+
+        function renderChat(messages) {
+            const box = document.getElementById('chatMessages');
+            const colors = {
+                'Viesturs': 'text-blue-400',
+                'Marija': 'text-pink-400',
+                'Bruno': 'text-amber-400',
+                'Leo': 'text-emerald-400'
+            };
+            box.innerHTML = messages.map(m => `
+                <div class="p-2.5 rounded-lg text-xs bg-slate-900/70 border border-slate-800">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold ${colors[m.sender] || 'text-slate-300'}">${m.sender}</span>
+                        <span class="text-[10px] text-slate-500">${m.time}</span>
+                    </div>
+                    <div class="text-slate-200 whitespace-pre-wrap">${m.text}</div>
+                </div>
+            `).join('');
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function renderTasks(tasks) {
+            const box = document.getElementById('taskList');
+            box.innerHTML = tasks.map(t => `
+                <div class="p-2 rounded bg-slate-900/70 border border-slate-800 flex justify-between items-center text-xs">
+                    <span class="text-slate-200">${t.title}</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-950 text-blue-400 border border-blue-800">${t.status}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderArtifact(art) {
+            if (!art) return;
+            document.getElementById('artifactTitle').innerText = art.title;
+            const el = document.getElementById('artifactCode');
+            el.innerText = art.code;
+            if (window.hljs) hljs.highlightElement(el);
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            const author = document.getElementById('authorSelect').value;
+            input.value = '';
+
+            // Optimistic UI: uzreiz parādām ziņu ekrānā un indikatoru
+            const chatBox = document.getElementById('chatMessages');
+            const now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            chatBox.innerHTML += `
+                <div class="p-2.5 rounded-lg text-xs bg-slate-900/70 border border-blue-900/50">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-blue-400">${author}</span>
+                        <span class="text-[10px] text-slate-500">${now}</span>
+                    </div>
+                    <div class="text-slate-200 whitespace-pre-wrap">${text}</div>
+                </div>
+                <div id="aiTypingIndicator" class="p-2 text-[11px] text-amber-400/80 italic flex items-center gap-1.5 animate-pulse">
+                    <span>●</span> Komanda domā...
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                await fetch('/api/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-AQ-PIN': currentPin
+                    },
+                    body: JSON.stringify({ sender: author, text: text })
+                });
+            } catch (err) {
+                console.error("Kļūda nosūtot:", err);
+            } finally {
+                const ind = document.getElementById('aiTypingIndicator');
+                if (ind) ind.remove();
+                fetchState();
+            }
+        }
+
+        async function createTask() {
+            const input = document.getElementById('newTaskTitle');
+            const title = input.value.trim();
+            if (!title) return;
+            input.value = '';
+            await fetch('/api/task', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-AQ-PIN': currentPin
+                },
+                body: JSON.stringify({ title: title })
+            });
+            fetchState();
+        }
+
+        function copyCode() {
+            navigator.clipboard.writeText(document.getElementById('artifactCode').innerText);
+            alert("Kods nokopēts!");
+        }
+
+        checkAuth();
+        setInterval(fetchState, 3000);
+    </script>
+</body>
+</html>
+"""
+
 @app.route('/')
 def index():
     return render_template_string(HTML_TEMPLATE)
