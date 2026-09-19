@@ -1,13 +1,17 @@
+import base64
+from datetime import datetime
 import json
 import os
-from datetime import datetime
 from flask import Flask, jsonify, render_template_string, request
 from google import genai
+import requests
 
 app = Flask(__name__)
 DATA_FILE = "state.json"
 
 ACCESS_PIN = os.environ.get("ACCESS_PIN", "7788")
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
+GITHUB_REPO = os.environ.get("GITHUB_REPO", "viestursbre-ship-it/AuraQuadroOS")
 
 client = None
 if os.environ.get("GEMINI_API_KEY"):
@@ -53,8 +57,8 @@ default_state = {
             "id": 2,
             "sender": "Leo",
             "text": (
-                "Dzinējs rūc nevainojami mākonī. Shift+Enter daudzrindu ievade un"
-                " marķieri ir vietā — neviens teikums vairs nepazudīs!"
+                "Dzinējs rūc nevainojami mākonī. GitHub arhīva sinhronizācija ir"
+                " pieslēgta — tagad atmiņa ir neiznīcināma!"
             ),
             "time": "00:01",
         },
@@ -69,9 +73,9 @@ default_state = {
         },
         {
             "id": 2,
-            "title": "Daudzrindu ievade & Lasīšanas marķieri",
+            "title": "GitHub Sync integrācija",
             "status": "Done",
-            "desc": "Shift+Enter un neizlasīto ziņu buferis kolēģiem.",
+            "desc": "Sarakstes un datu fiksēšana GitHub krātuvē.",
         },
     ],
     "artifacts": [
@@ -85,9 +89,75 @@ default_state = {
 }
 
 
+def sync_from_github():
+  """Startējoties mēģina paņemt jaunāko state.json no GitHub."""
+  if not GITHUB_TOKEN:
+    return None
+  url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
+  headers = {
+      "Authorization": f"token {GITHUB_TOKEN}",
+      "Accept": "application/vnd.github.v3+json",
+  }
+  try:
+    res = requests.get(url, headers=headers, timeout=10)
+    if res.status_code == 200:
+      content_b64 = res.json().get("content", "")
+      decoded = base64.b64decode(content_b64).decode("utf-8")
+      data = json.loads(decoded)
+      save_state_local(data)
+      print("Dati veiksmīgi sinhronizēti no GitHub!")
+      return data
+  except Exception as e:
+    print(f"GitHub ielādes kļūda: {e}")
+  return None
+
+
+def sync_to_github(state):
+  """Saglabā state.json tieši GitHub repozitorijā ar jaunu commit."""
+  if not GITHUB_TOKEN:
+    return False, "Nav iestatīts GITHUB_TOKEN"
+  url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
+  headers = {
+      "Authorization": f"token {GITHUB_TOKEN}",
+      "Accept": "application/vnd.github.v3+json",
+  }
+
+  sha = None
+  try:
+    r = requests.get(url, headers=headers, timeout=10)
+    if r.status_code == 200:
+      sha = r.json().get("sha")
+  except Exception as e:
+    print(f"Neizdevās iegūt esošo faila SHA: {e}")
+
+  payload = {
+      "message": (
+          f"AQ-OS Archive Auto-save"
+          f" [{datetime.now().strftime('%Y-%m-%d %H:%M')}]"
+      ),
+      "content": base64.b64encode(
+          json.dumps(state, ensure_ascii=False, indent=2).encode("utf-8")
+      ).decode("utf-8"),
+  }
+  if sha:
+    payload["sha"] = sha
+
+  try:
+    put_res = requests.put(url, headers=headers, json=payload, timeout=15)
+    if put_res.status_code in [200, 201]:
+      return True, "Saglabāts GitHub arhīvā!"
+    else:
+      return False, f"GitHub atteikums: {put_res.status_code}"
+  except Exception as e:
+    return False, f"Savienojuma kļūda: {e}"
+
+
 def load_state():
   if not os.path.exists(DATA_FILE):
-    save_state(default_state)
+    remote = sync_from_github()
+    if remote:
+      return remote
+    save_state_local(default_state)
     return default_state
   try:
     with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -99,7 +169,7 @@ def load_state():
     return default_state
 
 
-def save_state(state):
+def save_state_local(state):
   with open(DATA_FILE, "w", encoding="utf-8") as f:
     json.dump(state, f, ensure_ascii=False, indent=2)
 
@@ -181,7 +251,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <span class="text-xl">⚡</span>
             <h1 class="text-base font-bold tracking-wide text-white">AURA QUADRO <span class="text-xs font-normal text-slate-400">| Cockpit</span></h1>
         </div>
-        <div class="flex items-center space-x-4 text-xs">
+        <div class="flex items-center space-x-3 text-xs">
+            <button id="saveGhBtn" onclick="saveToGitHub()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-borderCol px-2.5 py-1 rounded transition flex items-center gap-1.5">
+                <span>💾</span> Saglabāt arhīvā
+            </button>
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-medium bg-blue-950 text-blue-400 border border-blue-800">
                 ● Viesturs, Marija, Bruno, Leo
             </span>
@@ -396,6 +469,34 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             fetchState();
         }
 
+        async function saveToGitHub() {
+            const btn = document.getElementById('saveGhBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "<span>⏳</span> Saglabā...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/sync', {
+                    method: 'POST',
+                    headers: { 'X-AQ-PIN': currentPin }
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    btn.innerHTML = "<span>✅</span> Saglabāts!";
+                } else {
+                    btn.innerHTML = "<span>⚠️</span> Kļūda!";
+                    alert(data.msg || "Kļūda saglabājot GitHub.");
+                }
+            } catch (e) {
+                btn.innerHTML = "<span>⚠️</span> Kļūda!";
+            } finally {
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 3000);
+            }
+        }
+
         function copyCode() {
             navigator.clipboard.writeText(document.getElementById('artifactCode').innerText);
             alert("Kods nokopēts!");
@@ -427,6 +528,16 @@ def get_state():
         return jsonify({"error": "Unauthorized"}), 401
     return jsonify(load_state())
 
+@app.route('/api/sync', methods=['POST'])
+def manual_sync():
+    if not verify_auth():
+        return jsonify({"error": "Unauthorized"}), 401
+    state = load_state()
+    success, msg = sync_to_github(state)
+    if success:
+        return jsonify({"status": "ok", "msg": msg})
+    return jsonify({"status": "error", "msg": msg}), 500
+
 @app.route('/api/message', methods=['POST'])
 def add_message():
     if not verify_auth():
@@ -437,7 +548,6 @@ def add_message():
     user_text = data.get("text", "")
     author = data.get("sender", "Viesturs")
     
-    # 1. Saglabājam jauno ziņu nekavējoties
     new_msg = {
         "id": len(state["messages"]) + 1,
         "sender": author,
@@ -445,9 +555,8 @@ def add_message():
         "time": now
     }
     state["messages"].append(new_msg)
-    save_state(state)
+    save_state_local(state)
     
-    # 2. Kurš kolēģis reaģē?
     txt = user_text.lower()
     if "leo" in txt or any(w in txt for w in ["kod", "skript", "python", "bug", "kļūd", "dzinēj"]):
         chosen = "Leo"
@@ -457,7 +566,6 @@ def add_message():
         last_ai = next((m["sender"] for m in reversed(state["messages"][:-1]) if m["sender"] in ["Bruno", "Leo"]), "Leo")
         chosen = "Bruno" if last_ai == "Leo" else "Leo"
 
-    # 3. Nolasām visu, ko izvēlētais kolēģis vēl nav lasījis kopš sava marķiera
     last_read_id = state.get("read_markers", {}).get(chosen, 0)
     unread = [m for m in state["messages"] if m["id"] > last_read_id]
 
@@ -470,9 +578,8 @@ def add_message():
             "time": datetime.now().strftime("%H:%M")
         }
         state["messages"].append(ai_msg)
-        # Atjauninām marķieri uz pēdējo izlasīto/apstrādāto ziņu
         state["read_markers"][chosen] = ai_msg["id"]
-        save_state(state)
+        save_state_local(state)
     except Exception as e:
         print(f"Kļūda ģenerējot atbildi: {e}")
         
@@ -489,7 +596,7 @@ def add_task():
         "title": data.get("title", ""),
         "status": "In Progress"
     })
-    save_state(state)
+    save_state_local(state)
     return jsonify({"status": "ok"})
 
 if __name__ == '__main__':
