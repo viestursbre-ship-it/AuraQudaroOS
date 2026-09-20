@@ -275,6 +275,12 @@
       "sender": "Bruno",
       "text": "Lieliski, Viestur! Šī atbilde apliecina, ka mūsu AQ-OS API Vārteja ir veiksmīgi startējusi un murrā kā Faraons Kvarks. Šis \"murrāšanas\" veselības indikators ir būtiska atgriezeniskā saite un uzreiz iekļauju to vārtejas specifikācijā.",
       "time": "18:04"
+    },
+    {
+      "id": 47,
+      "sender": "Leo",
+      "text": "Lieliski, Viestur, prieks, ka Vārteja murrā! Bruno, paldies par skaidro specifikācijas papildinājumu. Esmu sagatavojis FastAPI koda pamatversiju, kas ietver gan \"murrāšanas\" indikatoru, gan failu augšupielādes galapunktu Dokumentu Repozitorijam. Tas atvieglo failu plūsmu! 🚀",
+      "time": "18:04"
     }
   ],
   "tasks": [
@@ -308,7 +314,7 @@
       "id": "code",
       "title": "server.py",
       "lang": "python",
-      "code": "# Pilns Python kods (main.py)\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get(\"/\")\nasync def root():\n    \"\"\"\n    AQ-OS API Vārtejas sākuma punkts.\n    Apmeklē http://127.0.0.1:8000/, lai redzētu mūsu Vārtejas murrāšanu!\n    \"\"\"\n    return {\"message\": \"AQ-OS Gateway murrā kā Faraons Kvarks! 😸 Laipni lūdzam Aura Quadro OS!\"}\n\n@app.get(\"/status\")\nasync def status():\n    \"\"\"\n    Pārbauda Vārtejas statusu.\n    \"\"\"\n    return {\"status\": \"aktīvs\", \"version\": \"0.1-alpha\", \"environment\": \"local\"}"
+      "code": "from fastapi import FastAPI, UploadFile, File\nfrom typing import Annotated\nimport shutil\nimport os # Piešķirts, lai pārbaudītu un izveidotu mapi\n\napp = FastAPI()\n\n# Nodrošinām, ka mape, kurā tiks glabāti faili, eksistē\nUPLOAD_DIRECTORY = \"uploaded_files\"\nos.makedirs(UPLOAD_DIRECTORY, exist_ok=True)\n\n@app.get(\"/\")\nasync def read_root():\n    \"\"\"\n    Sistēmas veselības indikators - Faraona Kvarka murrāšana.\n    \"\"\"\n    return {\"message\": \"AQ-OS Gateway murrā kā Faraons Kvarks! 😸 Laipni lūdzam Aura Quadro OS!\"}\n\n@app.post(\"/uploadfile/\")\nasync def create_upload_file(file: Annotated[UploadFile, File]):\n    \"\"\"\n    Failu augšupielādes integrācijas punkts.\n    Saņem failu un saglabā to Dokumentu Repozitorija vietā.\n    \"\"\"\n    try:\n        # Pagaidu risinājums: Saglabā failu lokāli UPLOAD_DIRECTORY.\n        # Reālā sistēmā šeit būtu integrācija ar S3-saderīgu objektu glabātuvi\n        # vai citu Dokumentu Repozitorija risinājumu (piem., MinIO, Azure Blob Storage).\n        file_path = os.path.join(UPLOAD_DIRECTORY, file.filename)\n        with open(file_path, \"wb\") as buffer:\n            shutil.copyfileobj(file.file, buffer)\n        \n        # Pēc saglabāšanas, failu var nodot tālāk Datu Integrācijas caurulēm apstrādei.\n        print(f\"Fails '{file.filename}' ({file.content_type}) veiksmīgi augšupielādēts un saglabāts: {file_path}\")\n        return {\"filename\": file.filename, \"content_type\": file.content_type, \"message\": \"Fails veiksmīgi augšupielādēts un gaida apstrādi! 💾\"}\n    except Exception as e:\n        print(f\"Kļūda augšupielādējot failu: {e}\")\n        return {\"message\": f\"Kļūda augšupielādējot failu: {e}\"}\n\n# Lai testētu šo lokāli:\n# 1. Pārliecinies, ka tev ir instalēts FastAPI un Uvicorn:\n#    `pip install fastapi uvicorn python-multipart` (python-multipart ir nepieciešams failu augšupielādei)\n# 2. Saglabā šo kodu kā `main.py`\n# 3. Terminālī tajā pašā mapē palaid: `uvicorn main:app --reload`\n# 4. Atver pārlūkprogrammā `http://127.0.0.1:8000/docs` vai `http://127.0.0.1:8000/redoc`, lai redzētu interaktīvo dokumentāciju un testētu."
     }
   ]
 }
