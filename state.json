@@ -55,14 +55,26 @@
       "title": "Divpakāpju vadības štafete (Bruno -> Leo)",
       "status": "Done",
       "desc": "Bruno arhitektūra pirmais, Leo komentārs ar pogu."
+    },
+    {
+      "id": 3,
+      "title": "Gatavot un atjaunināt AQ dokumentāciju",
+      "status": "Todo",
+      "assignee": "Bruno"
     }
   ],
   "artifacts": [
     {
-      "id": 1,
+      "id": "doc",
+      "title": "AQ_SYSTEM_SPEC.md",
+      "lang": "markdown",
+      "code": "# ⚡ Aura Quadro OS — Sistēmas Pase (v0.3)\n\n## 1. Vīzija un Komanda\nOperatīvā sistēma radošai, ātrai MI vadībai bez korporatīvās berzes.\n- **Viesturs**: Galvenais diriģents & stratēģis.\n- **Marija**: UX & dzīves ritms.\n- **Bruno**: Sistēmas arhitektūra & dzīvā dokumentācija.\n- **Leo**: Tehniskais dzinējs & koda arhitektūra.\n- **Faraons Kvarks**: CZO & miera garants.\n\n## 2. Paneļu Ekosistēma\n1. **The Core (Plūsma)**: Kodolīga lēmumu pieņemšana un domapmaiņa.\n2. **Intent & Tasks**: Mērķu dēlis ar statusiem (Todo -> In Progress -> Done) un piesaistītiem izpildītājiem.\n3. **Kods & Dokumentācija**: Dzīvie artefakti ar tūlītēju .doc/.md lejupielādi.\n\n## 3. Datu Drošība: Instant-Sync\nKatra sarakstes rinda vai uzdevumu maiņa automātiski 2 sekunžu laikā fonā iegulst GitHub `state.json` failā."
+    },
+    {
+      "id": "code",
       "title": "server.py",
       "lang": "python",
-      "code": "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo & Kvarks online!"
+      "code": "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo & Kvarks online!\n# Fona Instant-Sync aktīvs."
     }
   ]
 }
