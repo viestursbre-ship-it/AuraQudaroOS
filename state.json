@@ -167,6 +167,12 @@
       "sender": "Bruno",
       "text": "Viestur, lielisks jautājums, kas ir mūsu arhitektūras stūrakmens! Mūsu modulārā pieeja ar mikropakalpojumiem, konteinerizāciju (Docker) un orķestrāciju (Kubernetes) tieši nodrošina šo pārnesamību starp vidēm. Lietotāja pieredzes un konteksta \"nēsāšanu\" mēs risinām ar centralizētajām Lietotāja Profilu un Kontekstuālās Datu Glabātuvēm, kas ir AQ-OS sirds un dvēsele, ļaujot AI dzinējiem adaptēties jebkur.",
       "time": "16:09"
+    },
+    {
+      "id": 29,
+      "sender": "Leo",
+      "text": "Bruno to precīzi izklāstīja. Mikropakalpojumi ar Docker un Kubernetes nodrošinās funkciju modularitāti un pārnesamību starp vidēm, kamēr centralizētas datu glabātuves saglabās lietotāja pieredzi. Tā ir stabila bāze viegli pārnesamai sistēmai. ⚡",
+      "time": "16:10"
     }
   ],
   "tasks": [
