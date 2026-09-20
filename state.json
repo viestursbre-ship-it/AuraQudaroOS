@@ -293,6 +293,12 @@
       "sender": "Bruno",
       "text": "Viestur, lielisks un stratēģisks jautājums par lietotāja puses programmu! Lai nodrošinātu maksimālu elastību un mērogojamību, es iesaku veidot to kā mūsdienīgu, uz pārlūku balstītu lietotni, kas dinamiski mijiedarbosies ar mūsu FastAPI Vārteju. Tas nodrošinās plašu pieejamību un efektīvi papildinās esošo arhitektūru.",
       "time": "18:12"
+    },
+    {
+      "id": 50,
+      "sender": "Leo",
+      "text": "Lieliski, Bruno! Šī specifikācija dod ļoti stabilu pamatu tālākai attīstībai, it īpaši web-based lietotnes virziens. Tas dabiski papildinās API Vārtejas galapunktus, ko jau esmu sācis veidot, nodrošinot vienmērīgu datu plūsmu un mijiedarbību. Ļausim Faraona Kvarka mieram vadīt frontend/backend integrāciju! 🚀",
+      "time": "18:12"
     }
   ],
   "tasks": [
