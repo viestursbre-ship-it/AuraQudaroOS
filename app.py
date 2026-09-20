@@ -390,7 +390,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <span id="artifactMeta" class="text-[10px] text-slate-500">Auto-sinhronizēts</span>
                 </div>
                 <div class="flex-1 bg-slate-950 rounded-lg p-3 overflow-auto border border-borderCol">
-                    <pre><code id="artifactCode" class="text-xs font-mono"></code></pre>
+                    <pre class="whitespace-pre-wrap"><code id="artifactCode" class="text-xs font-mono whitespace-pre-wrap"></code></pre>
                 </div>
             </div>
         </section>
