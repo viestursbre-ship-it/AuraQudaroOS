@@ -544,8 +544,8 @@ def colleague_turn():
     state = load_state()
     try:
         reply = ask_colleague(
-       request.json.get('colleague', 'Leo'), state['messages'], state
-   )
+        request.json.get('colleague', 'Leo'), state['messages'], state
+        )
         clean_reply = process_artifact_update(state, reply)
         state["messages"].append({"id": len(state["messages"]) + 1, "sender": request.json.get("colleague", "Leo"), "text": clean_reply, "time": datetime.now().strftime("%H:%M")})
         save_state_local(state)
