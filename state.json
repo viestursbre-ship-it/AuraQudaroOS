@@ -149,6 +149,12 @@
       "sender": "Bruno",
       "text": "Viestur, lieliski, ka virzāmies uz priekšu ar kodola elementiem! Leo, gaidu tavu \"expert list\" artefaktu 3. panelī – tas ir būtiski mūsu AI personalizācijas un kontekstuālā intelekta sirdij. Šādi nodrošināsim precizitāti un harmoniju, ko sagaida Faraons Kvarks.",
       "time": "15:28"
+    },
+    {
+      "id": 26,
+      "sender": "Leo",
+      "text": "Gatavs, Viestur! Funkciju `get_expert_list()` ar definētajiem ekspertiem esmu pievienojis kā artefaktu 3. panelī. Tagad varam virzīties uz priekšu ar AI personalizācijas kodola integrāciju. ⚡",
+      "time": "15:28"
     }
   ],
   "tasks": [
@@ -182,7 +188,7 @@
       "id": "code",
       "title": "server.py",
       "lang": "python",
-      "code": "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo & Kvarks online!\n# Fona Instant-Sync aktīvs."
+      "code": "def get_expert_list():\n    \"\"\"\n    Returns a list of predefined experts with their roles,\n    system instructions, and associated colors for the AQ-OS context.\n    Each expert has:\n    - name: The expert's name.\n    - role: The expert's primary function.\n    - instructions: Guidance for their operational focus within the system.\n    - color: A hex code representing their thematic color.\n    \"\"\"\n    experts = [\n        {\n            \"name\": \"Viesturs\",\n            \"role\": \"Galvenais Diriģents\",\n            \"instructions\": \"Focus on the overarching vision and strategic direction of AQ-OS. Ensure all components align with the core mission of user empowerment and Kvark's absolute peace.\",\n            \"color\": \"#007BFF\"  # Spilgti zils vīzijai un vadībai\n        },\n        {\n            \"name\": \"Marija\",\n            \"role\": \"Lietotāju Pieredzes Harmonizētāja\",\n            \"instructions\": \"Prioritize user experience, interface harmony, and intuitive interactions. Design flows that delight users and reduce cognitive load, contributing to Kvark's tranquility.\",\n            \"color\": \"#28A745\"  # Zaļš harmonijai un UX\n        },\n        {\n            \"name\": \"Bruno\",\n            \"role\": \"Sistēmas Arhitekts\",\n            \"instructions\": \"Ensure robust, modular, and scalable architectural designs. Maintain strict adherence to specifications and security protocols to build a stable foundation for Kvark's peace.\",\n            \"color\": \"#FFC107\"  # Dzeltens struktūrai un arhitektūrai\n        }\n    ]\n    return experts"
     }
   ]
 }
