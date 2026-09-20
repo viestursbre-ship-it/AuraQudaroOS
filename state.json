@@ -170,9 +170,15 @@
     },
     {
       "id": 29,
-      "sender": "Leo",
-      "text": "Bruno to precīzi izklāstīja. Mikropakalpojumi ar Docker un Kubernetes nodrošinās funkciju modularitāti un pārnesamību starp vidēm, kamēr centralizētas datu glabātuves saglabās lietotāja pieredzi. Tā ir stabila bāze viegli pārnesamai sistēmai. ⚡",
+      "sender": "Viesturs",
+      "text": "Un vēl vajag ņemt vērā pēc iespējas lētākos mākoņrisinājumus, bet drošus. Pie AQ izstrādes",
       "time": "16:10"
+    },
+    {
+      "id": 30,
+      "sender": "Bruno",
+      "text": "Viestur, šis ir būtisks princips, kas jau iestrādāts mūsu arhitektūras pamatā! Modulārie mikropakalpojumi un konteinerizācija atvieglo resursu optimizāciju un elastīgu izvietošanu, ļaujot mums izvēlēties visrentablākos, taču drošākos mākoņrisinājumus. Tas nodrošinās gan Faraona Kvarka miermīlību, gan budžeta harmoniju.",
+      "time": "16:11"
     }
   ],
   "tasks": [
