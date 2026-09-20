@@ -314,29 +314,46 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             location.reload();
         }
 
+     let lastMessageCount = 0;
+
         async function fetchState() {
             if (!currentPin) return;
-            const res = await fetch('/api/state', {
-                headers: { 'X-AQ-PIN': currentPin }
-            });
-            if (res.status === 401) {
-                logout();
-                return;
+            try {
+                const res = await fetch('/api/state', {
+                    headers: { 'X-AQ-PIN': currentPin }
+                });
+                if (res.status === 401) {
+                    logout();
+                    return;
+                }
+                const data = await res.json();
+                
+                // Pārzīmējam čatu TIKAI tad, ja reāli ir jaunas ziņas!
+                if (data.messages && data.messages.length !== lastMessageCount) {
+                    renderChat(data.messages);
+                    lastMessageCount = data.messages.length;
+                }
+                
+                renderTasks(data.tasks);
+                renderArtifact(data.artifacts[0]);
+            } catch (err) {
+                console.error("Sinhronizācijas kļūda:", err);
             }
-            const data = await res.json();
-            renderChat(data.messages);
-            renderTasks(data.tasks);
-            renderArtifact(data.artifacts[0]);
         }
 
         function renderChat(messages) {
             const box = document.getElementById('chatMessages');
+            
+            // Pārbaudām, vai lietotājs šobrīd atrodas pie pašas apakšas (ar 60px pielaidi)
+            const isScrolledToBottom = box.scrollHeight - box.clientHeight <= box.scrollTop + 60;
+
             const colors = {
                 'Viesturs': 'text-blue-400',
                 'Marija': 'text-pink-400',
                 'Bruno': 'text-amber-400',
                 'Leo': 'text-emerald-400'
             };
+
             box.innerHTML = messages.map(m => `
                 <div class="p-2.5 rounded-lg text-xs bg-slate-900/70 border border-slate-800">
                     <div class="flex justify-between items-center mb-1">
@@ -346,7 +363,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <div class="text-slate-200 whitespace-pre-wrap">${m.text}</div>
                 </div>
             `).join('');
-            box.scrollTop = box.scrollHeight;
+
+            // Noritinām uz leju TIKAI tad, ja lietotājs jau bija apakšā!
+            if (isScrolledToBottom) {
+                box.scrollTop = box.scrollHeight;
+            }
         }
 
         function renderTasks(tasks) {
