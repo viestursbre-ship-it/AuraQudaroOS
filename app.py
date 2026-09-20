@@ -141,25 +141,32 @@ def trigger_background_sync():
     sync_timer.start()
 
 def process_artifact_update(state, text):
-    clean_text = text
-    doc_match = re.search(r'```artifact:doc\s*(.*?)\s*```', text, re.DOTALL)
-    if doc_match:
-        doc_content = doc_match.group(1).strip()
-        for art in state.get("artifacts", []):
-            if art["id"] == "doc":
-                art["code"] = doc_content
-                break
-        clean_text = re.sub(r'```artifact:doc\s*.*?\s*```', '', clean_text, flags=re.DOTALL).strip()
+  clean_text = text
+  doc_match = re.search(r'```artifact:doc\s*(.*?)\s*```', text, re.DOTALL)
+  if doc_match:
+    doc_content = doc_match.group(1).strip()
+    for art in state.get('artifacts', []):
+      if art['id'] == 'doc':
+        art['code'] = doc_content
+        break
+    clean_text = re.sub(
+        r'```artifact:doc\s*.*?\s*```', '', clean_text, flags=re.DOTALL
+    ).strip()
 
-    code_match = re.search(r'```artifact:code\s*(.*?)\s*```', text, re.DOTALL)
-    if code_match:
-        code_content = code_match.group(1).strip()
-        for art in state.get("artifacts", []):
-            if art["id"] == "code":
-                art["code"] = code_content
-                break
-        clean_text = re.sub(r'```artifact:code\s*.*?\s*```', '', clean_text, flags=re.DOTALL).strip()
-    return clean_text
+  code_match = re.search(r'```artifact:code\s*(.*?)\s*```', text, re.DOTALL)
+  if code_match:
+    code_content = code_match.group(1).strip()
+    for art in state.get('artifacts', []):
+      if art['id'] == 'code':
+        art['code'] = code_content
+        break
+    clean_text = re.sub(
+        r'```artifact:code\s*.*?\s*```', '', clean_text, flags=re.DOTALL
+    ).strip()
+
+  # UZREIZ fiksējam stāvokli diskā, lai pārlūka 3.5s taimeris nenolasa veco versiju!
+  save_state_local(state)
+  return clean_text
 
 def ask_colleague(colleague_name, recent_history):
     if not client:
@@ -340,8 +347,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     lastMessageCount = data.messages.length;
                 }
                 renderTasks(data.tasks);
-                allArtifacts = data.artifacts || [];
-                renderActiveArtifact();
+                
+                // Pārbaudām, vai artefakti tiešām ir mainījušies, lai neradītu lēkāšanu
+                if (JSON.stringify(data.artifacts) !== JSON.stringify(allArtifacts)) {
+                    allArtifacts = data.artifacts || [];
+                    renderActiveArtifact();
+                }
             } catch (err) {}
         }
 
