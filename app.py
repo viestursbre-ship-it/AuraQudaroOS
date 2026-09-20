@@ -1,6 +1,7 @@
 import base64
 from datetime import datetime
 import json
+import re
 import os
 import threading
 import time
@@ -37,12 +38,19 @@ KONTEKSTS UN PROJEKTA ATMIŅA (Aura Quadro OS - AQ-OS):
 BRUNO_PROMPT = f"""Tu esi Bruno — Aura Quadro galvenais arhitekts.
 {SHARED_MEMORY}
 Tu atbildi pirmais. Esi asprātīgs, precīzs un stratēģisks.
-SVARĪGI: Nekad neraksti čatā garus palagus. Sniedz īsu, trāpīgu kopsavilkumu un lēmumus."""
+SVARĪGI PAR 3. PANELI:
+Čatā dod tikai kodolīgu 2-3 teikumu kopsavilkumu.
+Ja tu veido vai papildini sistēmas specifikāciju/arhitektūru, atbildes pašās beigās pievieno atsevišķu bloku šādā formātā:
+```artifact:doc
+# Šeit nāk pilna strukturēta Markdown specifikācija ar virsrakstiem, sadaļām un punktiem
 
 LEO_PROMPT = f"""Tu esi Leo — Aura Quadro galvenais koda inženieris.
 {SHARED_MEMORY}
 Tu pieslēdzies pēc Bruno analīzes. Esi konkrēts, praktisks inženieris ar labu humora izjūtu.
-SVARĪGI: Čatā sniedz kodolīgu inženiertehnisko skatījumu."""
+SVARĪGI PAR 3. PANELI:
+Čatā dod tikai kodolīgu komentāru.
+Ja tu sagatavo Python kodu vai konfigurāciju, atbildes beigās pievieno:
+# Šeit nāk pilns kods
 
 default_state = {
     "messages": [
@@ -765,6 +773,31 @@ def manual_sync():
     return jsonify({"status": "ok", "msg": msg})
   return jsonify({"status": "error", "msg": msg}), 500
 
+def process_artifact_update(state, text):
+  clean_text = text
+  doc_match = re.search(r"```artifact:doc\s*(.*?)\s*```", text, re.DOTALL)
+  if doc_match:
+    doc_content = doc_match.group(1).strip()
+    for art in state.get("artifacts", []):
+      if art["id"] == "doc":
+        art["code"] = doc_content
+        break
+    clean_text = re.sub(
+        r"```artifact:doc\s*.*?\s*```", "", clean_text, flags=re.DOTALL
+    ).strip()
+
+  code_match = re.search(r"```artifact:code\s*(.*?)\s*```", text, re.DOTALL)
+  if code_match:
+    code_content = code_match.group(1).strip()
+    for art in state.get("artifacts", []):
+      if art["id"] == "code":
+        art["code"] = code_content
+        break
+    clean_text = re.sub(
+        r"```artifact:code\s*.*?\s*```", "", clean_text, flags=re.DOTALL
+    ).strip()
+
+  return clean_text
 
 @app.route("/api/message", methods=["POST"])
 def add_message():
@@ -785,17 +818,18 @@ def add_message():
   })
   save_state_local(state)
 
-  try:
-    reply = ask_colleague(respondent, state["messages"])
-    state["messages"].append({
-        "id": len(state["messages"]) + 1,
-        "sender": respondent,
-        "text": reply,
-        "time": datetime.now().strftime("%H:%M"),
-    })
-    save_state_local(state)
-  except Exception as e:
-    print(f"Kļūda pie Bruno: {e}")
+try:
+      reply = ask_colleague(respondent, state["messages"])
+      clean_reply = process_artifact_update(state, reply)
+      state["messages"].append({
+          "id": len(state["messages"]) + 1,
+          "sender": respondent,
+          "text": clean_reply,
+          "time": datetime.now().strftime("%H:%M"),
+      })
+      save_state_local(state)
+    except Exception as e:
+      print(f"Kļūda pie Bruno: {e}")
 
   # INSTANT-SYNC: 2 sekundes pēc ziņas automātiski nosūta uz GitHub fonā!
   trigger_background_sync()
@@ -811,17 +845,18 @@ def colleague_turn():
   data = request.json
   colleague = data.get("colleague", "Leo")
 
-  try:
-    reply = ask_colleague(colleague, state["messages"])
-    state["messages"].append({
-        "id": len(state["messages"]) + 1,
-        "sender": colleague,
-        "text": reply,
-        "time": datetime.now().strftime("%H:%M"),
-    })
-    save_state_local(state)
-  except Exception as e:
-    print(f"Kļūda pie Leo: {e}")
+try:
+      reply = ask_colleague(colleague, state["messages"])
+      clean_reply = process_artifact_update(state, reply)
+      state["messages"].append({
+          "id": len(state["messages"]) + 1,
+          "sender": colleague,
+          "text": clean_reply,
+          "time": datetime.now().strftime("%H:%M"),
+      })
+      save_state_local(state)
+    except Exception as e:
+      print(f"Kļūda pie Leo: {e}")
 
   # INSTANT-SYNC: arī pēc Leo atbildes uzreiz fons sinhronizējas!
   trigger_background_sync()
