@@ -526,14 +526,14 @@ def add_message():
     save_state_local(state)
 
     try:
-        reply = ask_colleague(
+       reply = ask_colleague(
        data.get('respondent', 'Bruno'), state['messages'], state
    )
-        clean_reply = process_artifact_update(state, reply)
-        state["messages"].append({"id": len(state["messages"]) + 1, "sender": data.get("respondent", "Bruno"), "text": clean_reply, "time": datetime.now().strftime("%H:%M")})
-        save_state_local(state)
+       clean_reply = process_artifact_update(state, reply)
+       state["messages"].append({"id": len(state["messages"]) + 1, "sender": data.get("respondent", "Bruno"), "text": clean_reply, "time": datetime.now().strftime("%H:%M")})
+       save_state_local(state)
     except Exception as e:
-        print(f"Kļūda Bruno: {e}")
+       print(f"Kļūda Bruno: {e}")
 
     trigger_background_sync()
     return jsonify({"status": "ok"})
