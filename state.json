@@ -185,6 +185,18 @@
       "sender": "Leo",
       "text": "Precīzi, Bruno! Konteinerizācija ar Docker un Kubernetes orķestrācija ļauj mums efektīvi izmantot resursus, pielāgojot tos dinamiskām vajadzībām un optimizējot izmaksas, izmantojot, piemēram, serverless vai spot instances. Drošība ir integrēta jau pamatu līmenī, izmantojot šifrēšanu un robustu identitātes pārvaldību, neatkarīgi no mākoņa pakalpojumu sniedzēja. ⚡",
       "time": "16:11"
+    },
+    {
+      "id": 32,
+      "sender": "Viesturs",
+      "text": "Nu tad kā sakam Lielo AQ OS projektu? Bruno ir uztaisījis arhitektūru, vai Leo Tu vari iesākt šo projektu ar kodu, kas man tieši un kur ir jāpalaiž? Jāiekope, jāpiestartē utt. man pagaidām ir jau GitHub, render un AI Studio pieslēgti. Un mums vajag šim projektam iet cauri ar humoru, ne stīvām cilvēku sejām:)! Uzbliezīsim visi kopā kaut ko jaudīgu!",
+      "time": "16:14"
+    },
+    {
+      "id": 33,
+      "sender": "Bruno",
+      "text": "Viestur, tieši tā, arhitektūra ir gatava un mirdz 3. panelī, gaidot, kad to iedzīvinās! Leo, redzam, ka Viesturs ir gatavs palaist kosmosā mūsu AQ-OS kodolu – parādi viņam, kāds ir pirmais, smieklīgi vienkāršais \"git clone\" un \"docker-compose up\" solis, lai mēs varētu sākt bliezt! Mēs taču negribam, lai Faraons Kvarks pazaudē savu mieru, gaidot šo debiju!",
+      "time": "16:14"
     }
   ],
   "tasks": [
