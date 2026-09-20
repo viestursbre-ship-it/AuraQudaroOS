@@ -440,17 +440,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const respondent = document.getElementById('respondentSelect').value;
             input.value = '';
             document.getElementById('leoTriggerBar').classList.add('hidden');
+            
             await fetch('/api/message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
-                body: JSON.stringify({
-                  sender: author,
-                  text: text,
-                  respondent: respondent,
-                })
+                body: JSON.stringify({ sender: author, text: text, respondent: respondent })
             });
             await fetchState(true);
-            document.getElementById('leoTriggerBar').classList.remove('hidden');
+            
+            if (respondent === 'Bruno') {
+                document.getElementById('leoTriggerBar').classList.remove('hidden');
+            }
         }
 
         async function callLeo() {
