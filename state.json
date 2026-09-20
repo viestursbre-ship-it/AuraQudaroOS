@@ -221,6 +221,18 @@
       "sender": "Leo",
       "text": "Absolūti, Viestur un MI brāli! Mana inženiera sirds piekrīt pragmatismam. Lai AQ-OS kodols lokāli murrā bez smagajiem Dokera dzinējiem, izveido `aq-os-gateway` mapīti, iekopē tajā šo Python failu, instalē nepieciešamās bibliotēkas (`pip install fastapi uvicorn`) un palaid ar `uvicorn main:app --reload`. Tādējādi mūsu API Vārteja sāks dziedāt pat uz portatīvā datora, saglabājot Faraona Kvarka mieru! ⚡",
       "time": "16:26"
+    },
+    {
+      "id": 38,
+      "sender": "Viesturs",
+      "text": "Neliels jautājums Tev Leo. Uzinstalēju fastapi uvicorn. Kā man tālak šis scripts jāpalaiž? Resnais Kvarks kaķis arī nezina:)",
+      "time": "16:48"
+    },
+    {
+      "id": 39,
+      "sender": "Leo",
+      "text": "Viestur, Faraons Kvarks drīz murrās! Saglabā šo kodu failā `main.py` savā `aq-os-gateway` mapītē. Tad atver termināli tieši šajā mapītē un palaid `uvicorn main:app --reload`. Tas ieslēgs mūsu API Vārteju un ļaus tai dziedāt uz tava portatīvā! 🚀",
+      "time": "16:48"
     }
   ],
   "tasks": [
@@ -254,7 +266,7 @@
       "id": "code",
       "title": "server.py",
       "lang": "python",
-      "code": "# main.py\n# Lai palaistu lokāli, vispirms instalē nepieciešamās bibliotēkas:\n# pip install fastapi uvicorn\n\nfrom fastapi import FastAPI\n\n# Izveidojam FastAPI aplikāciju, kas kalpos kā mūsu AQ-OS API Vārteja.\n# Tas ir kā durvju sargs uz Faraona Kvarka svētnīcu, bet ar smaidu!\napp = FastAPI(\n    title=\"AQ-OS API Vārteja (lokālais Kvarks)\",\n    description=\"Sākuma punkts mūsu inteliģentajai sistēmai – mierīgi un efektīvi, pat uz portatīvā!\"\n)\n\n@app.get(\"/\")\nasync def root():\n    \"\"\"\n    Sagaidīšanas ziņojums, kad AQ-OS API Vārteja ir veiksmīgi palaista.\n    Faraons Kvarks ir apmierināts!\n    \"\"\"\n    return {\"message\": \"Sveiks, Viestur! AQ-OS API Vārteja sāk savu darbu – Faraons Kvarks murrā apmierinātībā!\"}\n\n@app.get(\"/status\")\nasync def status():\n    \"\"\"\n    Parāda API Vārtejas pašreizējo statusu.\n    Gatavs peldēt mākoņos vai uz tavas tastatūras!\n    \"\"\"\n    return {\"status\": \"online\", \"version\": \"0.0.1-alfa\", \"message\": \"Gatavs peldēt mākoņos!\"}\n\n# Kā palaist (no termināļa, atrodoties tajā pašā mapītē, kur ir main.py):\n# uvicorn main:app --reload\n# Pēc tam vari atvērt pārlūkprogrammā: http://127.0.0.1:8000/\n# Un Swagger UI (dokumentācija): http://127.0.0.1:8000/docs"
+      "code": "# Pilns Python kods (main.py)\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get(\"/\")\nasync def root():\n    \"\"\"\n    AQ-OS API Vārtejas sākuma punkts.\n    Apmeklē http://127.0.0.1:8000/, lai redzētu mūsu Vārtejas murrāšanu!\n    \"\"\"\n    return {\"message\": \"AQ-OS Gateway murrā kā Faraons Kvarks! 😸 Laipni lūdzam Aura Quadro OS!\"}\n\n@app.get(\"/status\")\nasync def status():\n    \"\"\"\n    Pārbauda Vārtejas statusu.\n    \"\"\"\n    return {\"status\": \"aktīvs\", \"version\": \"0.1-alpha\", \"environment\": \"local\"}"
     }
   ]
 }
