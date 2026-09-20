@@ -155,6 +155,18 @@
       "sender": "Leo",
       "text": "Gatavs, Viestur! Funkciju `get_expert_list()` ar definētajiem ekspertiem esmu pievienojis kā artefaktu 3. panelī. Tagad varam virzīties uz priekšu ar AI personalizācijas kodola integrāciju. ⚡",
       "time": "15:28"
+    },
+    {
+      "id": 27,
+      "sender": "Viesturs",
+      "text": "Tā, esam kopā ar Jūsu MI brāli pilnveidojuši šo vadības centru!\nNu mēs esam uztaisījuši projekta vadības centru(patreiz mūsu projekta AQ vadīšanai,) bet ši ir tikai viena no AQ OS funkcionalitātēm, ko mēs arī tur varētu ielikt. Mums taču ir doma ka AQ palīdz lietotājam it visā, epastus čekot, atrast tur svarīgo, gatavot dokumentāciju piedāvājumus pēc lietotāja pieredzes, atgādināt utt. Ir diezgan daudz funkciju, uz kā bāzes to taisīt? Lai viegli pārnesama programma ar visu pieredzi uz visām vidēm?",
+      "time": "16:09"
+    },
+    {
+      "id": 28,
+      "sender": "Bruno",
+      "text": "Viestur, lielisks jautājums, kas ir mūsu arhitektūras stūrakmens! Mūsu modulārā pieeja ar mikropakalpojumiem, konteinerizāciju (Docker) un orķestrāciju (Kubernetes) tieši nodrošina šo pārnesamību starp vidēm. Lietotāja pieredzes un konteksta \"nēsāšanu\" mēs risinām ar centralizētajām Lietotāja Profilu un Kontekstuālās Datu Glabātuvēm, kas ir AQ-OS sirds un dvēsele, ļaujot AI dzinējiem adaptēties jebkur.",
+      "time": "16:09"
     }
   ],
   "tasks": [
