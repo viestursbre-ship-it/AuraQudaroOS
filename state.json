@@ -131,6 +131,18 @@
       "sender": "Bruno",
       "text": "Viestur, lieliski! Prieks, ka Leo tagad pilnībā piekļūst arhitektūras pamatiem. Esmu pārliecināts, ka 3. panelī esošā specifikācija nodrošinās stabilu pamatu mūsu AI dzinēja un datu pārvaldības sistēmas būvniecībai, saglabājot Kvarka cienīgo mieru un sistēmas integritāti. Leo, gaidu tavus ieskatus un virzīsimies uz priekšu ar robustu implementāciju!",
       "time": "15:21"
+    },
+    {
+      "id": 23,
+      "sender": "Leo",
+      "text": "Lieliski, Bruno! Šī detalizētā arhitektūra dod skaidru virzību, un tehnoloģiskais karkass ir ideāls pamats. Sākšu ar API vārtejas (FastAPI) un ziņojumu starpprogrammatūras (Kafka/RabbitMQ) pamatu implementāciju, vienlaikus plānojot Docker/Kubernetes konteinerizāciju. Mūsu mērķis ir robusts un mērogojams risinājums, kas garantē veiktspēju un Kvarka mieru. ⚡",
+      "time": "15:21"
+    },
+    {
+      "id": 24,
+      "sender": "Viesturs",
+      "text": "\"Leo, ņem vērā Bruno nupat definēto arhitektūru no 3. paneļa un uzraksti pirmo Python moduli ekspertu konsilija pārvaldībai (get_expert_list() ar lomām, unikālajiem promptiem un krāsām)!\"",
+      "time": "15:21"
     }
   ],
   "tasks": [
