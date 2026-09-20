@@ -197,6 +197,12 @@
       "sender": "Bruno",
       "text": "Viestur, tieši tā, arhitektūra ir gatava un mirdz 3. panelī, gaidot, kad to iedzīvinās! Leo, redzam, ka Viesturs ir gatavs palaist kosmosā mūsu AQ-OS kodolu – parādi viņam, kāds ir pirmais, smieklīgi vienkāršais \"git clone\" un \"docker-compose up\" solis, lai mēs varētu sākt bliezt! Mēs taču negribam, lai Faraons Kvarks pazaudē savu mieru, gaidot šo debiju!",
       "time": "16:14"
+    },
+    {
+      "id": 34,
+      "sender": "Leo",
+      "text": "Absolūti, Bruno! Viestur, lai AQ-OS kodols sāk dūkt kā Faraona Kvarka murrāšana, vienkārši izveido mapīti `aq-os-gateway`, iekopē tajā artefaktu failus no 3. paneļa un palaid `docker-compose up -d`. Tādējādi mūsu API Vārteja sāks dziedāt! 🚀",
+      "time": "16:14"
     }
   ],
   "tasks": [
@@ -230,7 +236,7 @@
       "id": "code",
       "title": "server.py",
       "lang": "python",
-      "code": "def get_expert_list():\n    \"\"\"\n    Returns a list of predefined experts with their roles,\n    system instructions, and associated colors for the AQ-OS context.\n    Each expert has:\n    - name: The expert's name.\n    - role: The expert's primary function.\n    - instructions: Guidance for their operational focus within the system.\n    - color: A hex code representing their thematic color.\n    \"\"\"\n    experts = [\n        {\n            \"name\": \"Viesturs\",\n            \"role\": \"Galvenais Diriģents\",\n            \"instructions\": \"Focus on the overarching vision and strategic direction of AQ-OS. Ensure all components align with the core mission of user empowerment and Kvark's absolute peace.\",\n            \"color\": \"#007BFF\"  # Spilgti zils vīzijai un vadībai\n        },\n        {\n            \"name\": \"Marija\",\n            \"role\": \"Lietotāju Pieredzes Harmonizētāja\",\n            \"instructions\": \"Prioritize user experience, interface harmony, and intuitive interactions. Design flows that delight users and reduce cognitive load, contributing to Kvark's tranquility.\",\n            \"color\": \"#28A745\"  # Zaļš harmonijai un UX\n        },\n        {\n            \"name\": \"Bruno\",\n            \"role\": \"Sistēmas Arhitekts\",\n            \"instructions\": \"Ensure robust, modular, and scalable architectural designs. Maintain strict adherence to specifications and security protocols to build a stable foundation for Kvark's peace.\",\n            \"color\": \"#FFC107\"  # Dzeltens struktūrai un arhitektūrai\n        }\n    ]\n    return experts"
+      "code": "# Projekta sākšana:\n# 1. Izveidojiet jaunu mapi: `mkdir aq-os-gateway && cd aq-os-gateway`\n# 2. Saglabājiet zemāk redzamos failus attiecīgajās vietās šajā mapē.\n# 3. Palaidiet: `docker-compose up -d`\n# Pēc tam varat atvērt pārlūkā `http://localhost:8000/status` vai `http://localhost:8000`, lai redzētu, kā AQ-OS API Vārteja murrā.\n\n# Failu saraksts (ievietot mapē `aq-os-gateway`):\n\n# app.py\n# -----\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get(\"/\")\nasync def root():\n    return {\"message\": \"Aura Quadro OS API Gateway ir iedarbināta un murrā! 🚀\"}\n\n@app.get(\"/status\")\nasync def status():\n    return {\"status\": \"Operational\", \"version\": \"0.1-alpha\", \"message\": \"Faraons Kvarks ir mierīgs.\"}\n\n# Dockerfile\n# ----------\nFROM python:3.9-slim-buster\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY . .\nEXPOSE 8000\nCMD [\"uvicorn\", \"app:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"]\n\n# requirements.txt\n# ----------------\nfastapi\nuvicorn\n\n# docker-compose.yml\n# ------------------\nversion: '3.8'\n\nservices:\n  api-gateway:\n    build:\n      context: .\n      dockerfile: Dockerfile\n    ports:\n      - \"8000:8000\"\n    healthcheck:\n      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:8000/status\"]\n      interval: 30s\n      timeout: 10s\n      retries: 3\n    restart: unless-stopped\n    # Ja attīstības laikā vēlies redzēt koda izmaiņas bez konteinera pārbūves,\n    # vari noņemt komentāru no volumes sadaļas zemāk:\n    # volumes:\n    #   - .:/app"
     }
   ]
 }
