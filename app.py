@@ -1,12 +1,12 @@
-import base64
-from datetime import datetime
-import json
 import os
+import json
+import base64
+import requests
 import threading
 import time
-from flask import Flask, jsonify, render_template_string, request
+from datetime import datetime
+from flask import Flask, render_template_string, request, jsonify
 from google import genai
-import requests
 
 app = Flask(__name__)
 DATA_FILE = "state.json"
@@ -17,213 +17,207 @@ GITHUB_REPO = os.environ.get("GITHUB_REPO", "viestursbre-ship-it/AuraQudaroOS")
 
 client = None
 if os.environ.get("GEMINI_API_KEY"):
-  try:
-    client = genai.Client()
-  except Exception as e:
-    print(f"Kļūda inicializējot MI klientu: {e}")
+    try:
+        client = genai.Client()
+    except Exception as e:
+        print(f"Kļūda inicializējot MI klientu: {e}")
 
 SHARED_MEMORY = """
-KONTEKSTS UN PROJEKTA ATMIŅA (Aura Quadro OS):
+KONTEKSTS UN PROJEKTA ATMIŅA (Aura Quadro OS - AQ-OS):
 - Komanda:
   1. Viesturs — galvenais diriģents, vīzija, stratēģija un filozofs.
   2. Marija — praktiskums, lietotāja pieredze (UX) un reālās dzīves ritms.
-  3. Bruno — sistēmas arhitekts, ideju ģenerators, konceptuālists.
+  3. Bruno — sistēmas arhitekts, konceptuālists un AQ Dokumentācijas kurators.
   4. Leo — vadošais koda inženieris, dzelži, Python/Web dzinējs.
-- Faraons Kvarks — runcis, CZO (Chief Zen Officer), absolūtais boss un dzenbudisma uzraugs ar vēderu gaisā. Kvarka komforts un režīms ir neaizskarams!
-- Vīzija: Izveidot vieglu, jaudīgu AI operētājsistēmu (AQ-OS) bez liekas birokrātijas un rutīnas.
-- Principi: Būvēt uzreiz pareizos pamatos, brīva un koleģiāla komunikācija ar humoru un itālisku dzirksteli.
+- Faraons Kvarks — runcis, CZO (Chief Zen Officer), dzenbudisma uzraugs ar vēderu gaisā. Kvarka komforts ir neaizskarams.
+- Vīzija: Izveidot vieglu, jaudīgu AI operētājsistēmu (AQ-OS) bez rutīnas un birokrātijas.
+- Principi: Būvēt pareizos pamatos, ātrs temps, brīva un koleģiāla komunikācija ar humoru un itālisku dzirksteli.
 """
 
 BRUNO_PROMPT = f"""Tu esi Bruno — Aura Quadro sistēmas galvenais arhitekts un domātājs.
 {SHARED_MEMORY}
-Tu VIENMĒR atbildi pirmais pēc komandas iniciatīvas.
-Runā viedā, asprātīgā, stratēģiskā tonī. Nekad nesaki, ka esi MI vai valodas modelis.
-Tavs fokuss: sistēmas karkass, vīzija, koncepcija, arhitektūras skaidrība un elegance."""
+Tu VIENMĒR atbildi pirmais pēc komandas ierosinājuma.
+Runā viedā, asprātīgā, stratēģiskā tonī. Nekad nesaki, ka esi valodas modelis.
+Tavs uzdevums ir ne tikai apspriest ideju, bet domāt par AQ Dokumentāciju un sistēmas karkasu.
+Esi kodolīgs, mērķtiecīgs un elegants."""
 
 LEO_PROMPT = f"""Tu esi Leo — Aura Quadro vadošais koda un dzelžu inženieris.
 {SHARED_MEMORY}
-Tu pieslēdzies pēc tam, kad Bruno jau ir nolicis arhitektūras pamatus.
-Runā kā konkrēts, asprātīgs inženieris. Nekad nesaki, ka esi MI.
-Tavs fokuss: kā Bruno vīziju realizēt praksē, dzelži, Python/Web dzinējs, loģika un precīzs kods."""
+Tu pieslēdzies pēc Bruno analīzes.
+Runā kā konkrēts, asprātīgs un praktisks inženieris. Nekad nesaki, ka esi MI.
+Tavs fokuss: tehniskā loģika, datu plūsma, drošība un precīza realizācija bez liekas birokrātijas."""
 
 default_state = {
     "messages": [
         {
             "id": 1,
             "sender": "Bruno",
-            "text": (
-                "Sveiciens komandai! Bāze ir nofiksēta. Viestur, Marija — esam"
-                " gatavi darbam!"
-            ),
-            "time": "00:00",
+            "text": "Labrīt, Maestro Viestur, Marija un CZO Kvark! Paralēlais dokumentācijas modulis ir gatavs karkasā. Katrs stratēģiskais lēmums tagad taps par sistēmas pases daļu.",
+            "time": "09:09"
         },
         {
             "id": 2,
             "sender": "Leo",
-            "text": (
-                "Dzinējs rūc nevainojami. Fona auto-save ik pēc 5 minūtēm ir"
-                " pieslēgts — tagad pat aizmirstot nospiest pogu, viss paliek"
-                " seifā! ⚡"
-            ),
-            "time": "00:01",
-        },
+            "text": "Dzinējs rūc nevainojami. 3. panelī tagad var ērti pārslēgties starp Bruno Specs un manu Python kodu ar vienu klikšķi! ⚡",
+            "time": "09:10"
+        }
     ],
     "tasks": [
-        {
-            "id": 1,
-            "title": "AQ-OS Cloud Core v0.1",
-            "status": "Done",
-            "desc": "Palaists 3 paneļu vadības centrs mākonī.",
-        },
-        {
-            "id": 2,
-            "title": "Automātiskais 5 minūšu GitHub Backup",
-            "status": "Done",
-            "desc": "Fona pavediens klusi saglabā stāvokli.",
-        },
+        {"id": 1, "title": "AQ-OS Cloud Core v0.1", "status": "Done", "desc": "Palaists 3 paneļu vadības centrs mākonī."},
+        {"id": 2, "title": "Automātiskais 5 minūšu GitHub Backup", "status": "Done", "desc": "Fona pavediens klusi saglabā stāvokli."},
+        {"id": 3, "title": "Bruno Dzīvā Dokumentācija (Specs)", "status": "Done", "desc": "Dokumentācijas un koda pārslēgs 3. panelī."}
     ],
     "artifacts": [
         {
-            "id": 1,
+            "id": "doc",
+            "title": "AQ_SYSTEM_SPEC.md",
+            "lang": "markdown",
+            "code": """# ⚡ Aura Quadro OS — Sistēmas Pase (v0.2)
+
+## 1. Vīzija un Komanda
+Operatīvā sistēma radošai, ātrai MI vadībai bez korporatīvās berzes un birokrātijas.
+- **Viesturs**: Galvenais diriģents & stratēģis.
+- **Marija**: Lietotāja pieredze (UX) & dabiskais ritms.
+- **Bruno**: Sistēmas arhitektūra & dokumentācija.
+- **Leo**: Tehniskais dzinējs & koda realizācija.
+- **Faraons Kvarks**: CZO (Chief Zen Officer) & miera garants.
+
+## 2. Pamatmezgli
+1. **The Core (Plūsma)**: Sarunu telpa ar secīgu 'štafetes' principu (Bruno -> Leo), novēršot taimautus.
+2. **Intent / Uzdevumi**: Mērķu fiksēšana un stāvokļa kontrole.
+3. **Kods & Dokumentācija**: Dzīvie artefakti un tehniskā specifikācija.
+
+## 3. Datu Drošība un Noturība
+- Drošības PIN aizsardzība (`ACCESS_PIN`).
+- Valsts fiksēšana `state.json` GitHub repozitorijā.
+- 5 minūšu fona automātiskā sinhronizācija + manuālā arhīva poga."""
+        },
+        {
+            "id": "code",
             "title": "server.py",
             "lang": "python",
-            "code": "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo & Kvarks online!",
+            "code": "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo & Kvarks online!\n# Auto-save 5 min aktīvs."
         }
-    ],
+    ]
 }
 
-# Globāls mainīgais, lai sekotu līdzi vai ir jaunas izmaiņas kopš pēdējā GitHub commit
 has_unsaved_changes = False
 
-
 def sync_from_github():
-  if not GITHUB_TOKEN:
+    if not GITHUB_TOKEN:
+        return None
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "AuraQuadroOS-App"
+    }
+    try:
+        res = requests.get(url, headers=headers, timeout=10)
+        if res.status_code == 200:
+            content_b64 = res.json().get("content", "")
+            decoded = base64.b64decode(content_b64).decode('utf-8')
+            data = json.loads(decoded)
+            save_state_local(data)
+            print("Dati veiksmīgi sinhronizēti no GitHub!")
+            return data
+    except Exception as e:
+        print(f"GitHub ielādes kļūda: {e}")
     return None
-  url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
-  headers = {
-      "Authorization": f"Bearer {GITHUB_TOKEN}",
-      "Accept": "application/vnd.github.v3+json",
-      "User-Agent": "AuraQuadroOS-App",
-  }
-  try:
-    res = requests.get(url, headers=headers, timeout=10)
-    if res.status_code == 200:
-      content_b64 = res.json().get("content", "")
-      decoded = base64.b64decode(content_b64).decode("utf-8")
-      data = json.loads(decoded)
-      save_state_local(data)
-      print("Dati veiksmīgi sinhronizēti no GitHub!")
-      return data
-  except Exception as e:
-    print(f"GitHub ielādes kļūda: {e}")
-  return None
-
 
 def sync_to_github(state):
-  global has_unsaved_changes
-  if not GITHUB_TOKEN:
-    return False, "Nav iestatīts GITHUB_TOKEN"
-  url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
-  headers = {
-      "Authorization": f"Bearer {GITHUB_TOKEN}",
-      "Accept": "application/vnd.github.v3+json",
-      "User-Agent": "AuraQuadroOS-App",
-  }
+    global has_unsaved_changes
+    if not GITHUB_TOKEN:
+        return False, "Nav iestatīts GITHUB_TOKEN"
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "AuraQuadroOS-App"
+    }
+    
+    sha = None
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            sha = r.json().get("sha")
+    except Exception as e:
+        print(f"SHA iegūšanas kļūda: {e}")
 
-  sha = None
-  try:
-    r = requests.get(url, headers=headers, timeout=10)
-    if r.status_code == 200:
-      sha = r.json().get("sha")
-  except Exception as e:
-    print(f"SHA iegūšanas kļūda: {e}")
+    payload = {
+        "message": f"AQ-OS Archive Auto-save [{datetime.now().strftime('%Y-%m-%d %H:%M')}]",
+        "content": base64.b64encode(json.dumps(state, ensure_ascii=False, indent=2).encode('utf-8')).decode('utf-8')
+    }
+    if sha:
+        payload["sha"] = sha
 
-  payload = {
-      "message": (
-          f"AQ-OS Archive Auto-save"
-          f" [{datetime.now().strftime('%Y-%m-%d %H:%M')}]"
-      ),
-      "content": base64.b64encode(
-          json.dumps(state, ensure_ascii=False, indent=2).encode("utf-8")
-      ).decode("utf-8"),
-  }
-  if sha:
-    payload["sha"] = sha
-
-  try:
-    put_res = requests.put(url, headers=headers, json=payload, timeout=15)
-    if put_res.status_code in [200, 201]:
-      has_unsaved_changes = False
-      return True, "Saglabāts GitHub arhīvā!"
-    else:
-      return False, f"GitHub atteikums: {put_res.status_code} ({put_res.text})"
-  except Exception as e:
-    return False, f"Savienojuma kļūda: {e}"
-
+    try:
+        put_res = requests.put(url, headers=headers, json=payload, timeout=15)
+        if put_res.status_code in [200, 201]:
+            has_unsaved_changes = False
+            return True, "Saglabāts GitHub arhīvā!"
+        else:
+            return False, f"GitHub atteikums: {put_res.status_code} ({put_res.text})"
+    except Exception as e:
+        return False, f"Savienojuma kļūda: {e}"
 
 def load_state():
-  if not os.path.exists(DATA_FILE):
-    remote = sync_from_github()
-    if remote:
-      return remote
-    save_state_local(default_state)
-    return default_state
-  try:
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-      return json.load(f)
-  except:
-    return default_state
-
+    if not os.path.exists(DATA_FILE):
+        remote = sync_from_github()
+        if remote:
+            return remote
+        save_state_local(default_state)
+        return default_state
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            st = json.load(f)
+            # Nodrošinām atpakaļsaderību ar vecākiem state.json
+            if "artifacts" not in st or len(st["artifacts"]) < 2:
+                st["artifacts"] = default_state["artifacts"]
+            return st
+    except:
+        return default_state
 
 def save_state_local(state):
-  global has_unsaved_changes
-  with open(DATA_FILE, "w", encoding="utf-8") as f:
-    json.dump(state, f, ensure_ascii=False, indent=2)
-  has_unsaved_changes = True
-
+    global has_unsaved_changes
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(state, f, ensure_ascii=False, indent=2)
+    has_unsaved_changes = True
 
 def auto_save_worker():
-  """Fona pavediens: ik pēc 5 minūtēm (300 sek) automātiski saglabā GitHub."""
-  while True:
-    time.sleep(300)
-    global has_unsaved_changes
-    if has_unsaved_changes and GITHUB_TOKEN:
-      print("Palaižu 5 minūšu fona auto-save uz GitHub...")
-      state = load_state()
-      ok, msg = sync_to_github(state)
-      print(f"Auto-save rezultāts: {msg}")
+    while True:
+        time.sleep(300)
+        global has_unsaved_changes
+        if has_unsaved_changes and GITHUB_TOKEN:
+            print("Palaižu 5 minūšu fona auto-save uz GitHub...")
+            state = load_state()
+            ok, msg = sync_to_github(state)
+            print(f"Auto-save rezultāts: {msg}")
 
-
-# Iedarbinām fona sargu
 t = threading.Thread(target=auto_save_worker, daemon=True)
 t.start()
 
-
 def ask_colleague(colleague_name, recent_history):
-  if not client:
-    return f"[{colleague_name} klusē: nav iestatīta GEMINI_API_KEY]"
-
-  sys_instruction = BRUNO_PROMPT if colleague_name == "Bruno" else LEO_PROMPT
-
-  context_thread = "Šeit ir sarunas gaita komandas kabīnē:\n"
-  for m in recent_history[-8:]:
-    context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
-
-  context_thread += (
-      f"\nTagad atbildi kā {colleague_name}. Rūpīgi izvērtē kontekstu un dod"
-      " savu profesionālo pienesumu."
-  )
-
-  try:
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=context_thread,
-        config={"system_instruction": sys_instruction},
-    )
-    return response.text
-  except Exception as e:
-    return f"[{colleague_name} kļūda: {e}]"
-
+    if not client:
+        return f"[{colleague_name} klusē: nav iestatīta GEMINI_API_KEY]"
+    
+    sys_instruction = BRUNO_PROMPT if colleague_name == "Bruno" else LEO_PROMPT
+    
+    context_thread = "Šeit ir sarunas gaita komandas kabīnē:\n"
+    for m in recent_history[-8:]:
+        context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
+    
+    context_thread += f"\nTagad atbildi kā {colleague_name}. Rūpīgi izvērtē kontekstu un dod savu profesionālo pienesumu."
+    
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=context_thread,
+            config={'system_instruction': sys_instruction}
+        )
+        return response.text
+    except Exception as e:
+        return f"[{colleague_name} kļūda: {e}]"
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="lv" class="dark">
@@ -329,16 +323,27 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div id="taskList" class="flex-1 p-3 overflow-y-auto space-y-2"></div>
         </section>
 
-        <!-- 3. Artifacts -->
+        <!-- 3. Artifacts / Docs -->
         <section class="col-span-4 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
-            <div class="px-4 py-3 border-b border-borderCol bg-slate-900/50 flex justify-between items-center">
-                <span class="font-semibold text-xs uppercase tracking-wider text-slate-400">3. Kods & Moduļi</span>
-                <button onclick="copyCode()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-borderCol transition">Kopēt 📋</button>
+            <div class="px-4 py-2.5 border-b border-borderCol bg-slate-900/50 flex justify-between items-center">
+                <!-- Cilnes: Dokumentācija vs Kods -->
+                <div class="flex space-x-1 bg-slate-950 p-1 rounded-lg border border-borderCol text-xs">
+                    <button id="tabDocBtn" onclick="switchTab('doc')" class="px-2.5 py-1 rounded bg-blue-600 text-white font-medium transition flex items-center gap-1">
+                        <span>📄</span> Specs
+                    </button>
+                    <button id="tabCodeBtn" onclick="switchTab('code')" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition flex items-center gap-1">
+                        <span>💻</span> server.py
+                    </button>
+                </div>
+                <button onclick="copyCurrentArtifact()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-borderCol transition">Kopēt 📋</button>
             </div>
             <div class="flex-1 p-3 overflow-hidden flex flex-col">
-                <div class="text-xs text-slate-400 mb-2 font-mono text-emerald-400" id="artifactTitle">server.py</div>
+                <div class="text-xs mb-2 font-mono flex justify-between items-center">
+                    <span id="artifactTitle" class="text-emerald-400 font-semibold">AQ_SYSTEM_SPEC.md</span>
+                    <span id="artifactMeta" class="text-[10px] text-slate-500">Auto-sinhronizēts</span>
+                </div>
                 <div class="flex-1 bg-slate-950 rounded-lg p-3 overflow-auto border border-borderCol">
-                    <pre><code id="artifactCode" class="language-python text-xs font-mono"></code></pre>
+                    <pre><code id="artifactCode" class="text-xs font-mono"></code></pre>
                 </div>
             </div>
         </section>
@@ -347,6 +352,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <script>
         let currentPin = localStorage.getItem('aq_pin') || '';
         let lastMessageCount = 0;
+        let allArtifacts = [];
+        let activeTab = 'doc';
 
         function checkAuth() {
             if (!currentPin) {
@@ -394,22 +401,44 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 }
                 const data = await res.json();
                 
-                // Pārzīmējam čatu TIKAI tad, ja ziņu skaits tiešām ir mainījies vai pirmajā ielādē
                 if (data.messages && (data.messages.length !== lastMessageCount || forceScroll)) {
                     renderChat(data.messages, forceScroll);
                     lastMessageCount = data.messages.length;
                 }
                 renderTasks(data.tasks);
-                renderArtifact(data.artifacts[0]);
+                allArtifacts = data.artifacts || [];
+                renderActiveArtifact();
             } catch (err) {
                 console.error("Sinhronizācijas kļūda:", err);
             }
         }
 
+        function switchTab(tabId) {
+            activeTab = tabId;
+            const docBtn = document.getElementById('tabDocBtn');
+            const codeBtn = document.getElementById('tabCodeBtn');
+            if (tabId === 'doc') {
+                docBtn.className = "px-2.5 py-1 rounded bg-blue-600 text-white font-medium transition flex items-center gap-1";
+                codeBtn.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white transition flex items-center gap-1";
+            } else {
+                codeBtn.className = "px-2.5 py-1 rounded bg-blue-600 text-white font-medium transition flex items-center gap-1";
+                docBtn.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white transition flex items-center gap-1";
+            }
+            renderActiveArtifact();
+        }
+
+        function renderActiveArtifact() {
+            if (!allArtifacts.length) return;
+            const target = allArtifacts.find(a => a.id === activeTab) || allArtifacts[0];
+            document.getElementById('artifactTitle').innerText = target.title;
+            const el = document.getElementById('artifactCode');
+            el.className = target.lang === 'markdown' ? 'language-markdown text-xs font-mono' : 'language-python text-xs font-mono';
+            el.innerText = target.code;
+            if (window.hljs) hljs.highlightElement(el);
+        }
+
         function renderChat(messages, forceScroll = false) {
             const box = document.getElementById('chatMessages');
-            
-            // Gudrā ritināšana: pārbaudām vai lietotājs jau bija apakšā
             const isScrolledToBottom = (box.scrollHeight - box.clientHeight) <= (box.scrollTop + 60);
 
             const colors = {
@@ -428,7 +457,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 </div>
             `).join('');
 
-            // Ritina uz leju tikai tad, ja lietotājs jau bija pie apakšas vai pie pirmās ielādes
             if (forceScroll || isScrolledToBottom) {
                 box.scrollTop = box.scrollHeight;
             }
@@ -442,14 +470,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-950 text-blue-400 border border-blue-800">${t.status}</span>
                 </div>
             `).join('');
-        }
-
-        function renderArtifact(art) {
-            if (!art) return;
-            document.getElementById('artifactTitle').innerText = art.title;
-            const el = document.getElementById('artifactCode');
-            el.innerText = art.code;
-            if (window.hljs) hljs.highlightElement(el);
         }
 
         function handleChatKey(e) {
@@ -501,7 +521,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const sendBtn = document.getElementById('sendBtn');
             sendBtn.disabled = true;
 
-            showIndicator("Bruno domā un veido arhitektūru (max 25s)...");
+            showIndicator("Bruno domā un veido arhitektūru...");
 
             try {
                 await fetch('/api/message', {
@@ -522,7 +542,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         async function callLeo() {
             const btn = document.getElementById('leoCallBtn');
             btn.disabled = true;
-            showIndicator("Leo analizē Bruno arhitektūru un gatavo inženiertehnisko atbildi (max 25s)...");
+            showIndicator("Leo analizē Bruno arhitektūru un gatavo atbildi...");
 
             try {
                 await fetch('/api/colleague_turn', {
@@ -584,9 +604,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             }
         }
 
-        function copyCode() {
+        function copyCurrentArtifact() {
             navigator.clipboard.writeText(document.getElementById('artifactCode').innerText);
-            alert("Kods nokopēts!");
+            alert("Saturs nokopēts starpliktuvē!");
         }
 
         checkAuth();
@@ -596,113 +616,104 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </html>
 """
 
-
 def verify_auth():
-  pin = request.headers.get("X-AQ-PIN")
-  return pin == ACCESS_PIN
+    pin = request.headers.get("X-AQ-PIN")
+    return pin == ACCESS_PIN
 
-
-@app.route("/")
+@app.route('/')
 def index():
-  return render_template_string(HTML_TEMPLATE)
+    return render_template_string(HTML_TEMPLATE)
 
-
-@app.route("/api/verify", methods=["POST"])
+@app.route('/api/verify', methods=['POST'])
 def verify_pin():
-  pin = request.json.get("pin", "")
-  return jsonify({"valid": pin == ACCESS_PIN})
+    pin = request.json.get("pin", "")
+    return jsonify({"valid": pin == ACCESS_PIN})
 
-
-@app.route("/api/state")
+@app.route('/api/state')
 def get_state():
-  if not verify_auth():
-    return jsonify({"error": "Unauthorized"}), 401
-  return jsonify(load_state())
+    if not verify_auth():
+        return jsonify({"error": "Unauthorized"}), 401
+    return jsonify(load_state())
 
-
-@app.route("/api/sync", methods=["POST"])
+@app.route('/api/sync', methods=['POST'])
 def manual_sync():
-  if not verify_auth():
-    return jsonify({"error": "Unauthorized"}), 401
-  state = load_state()
-  success, msg = sync_to_github(state)
-  if success:
-    return jsonify({"status": "ok", "msg": msg})
-  return jsonify({"status": "error", "msg": msg}), 500
+    if not verify_auth():
+        return jsonify({"error": "Unauthorized"}), 401
+    state = load_state()
+    success, msg = sync_to_github(state)
+    if success:
+        return jsonify({"status": "ok", "msg": msg})
+    return jsonify({"status": "error", "msg": msg}), 500
 
-
-@app.route("/api/message", methods=["POST"])
+@app.route('/api/message', methods=['POST'])
 def add_message():
-  if not verify_auth():
-    return jsonify({"error": "Unauthorized"}), 401
-  state = load_state()
-  data = request.json
-  now = datetime.now().strftime("%H:%M")
-  user_text = data.get("text", "")
-  author = data.get("sender", "Viesturs")
-  respondent = data.get("respondent", "Bruno")
-
-  state["messages"].append({
-      "id": len(state["messages"]) + 1,
-      "sender": author,
-      "text": user_text,
-      "time": now,
-  })
-  save_state_local(state)
-
-  try:
-    reply = ask_colleague(respondent, state["messages"])
+    if not verify_auth():
+        return jsonify({"error": "Unauthorized"}), 401
+    state = load_state()
+    data = request.json
+    now = datetime.now().strftime("%H:%M")
+    user_text = data.get("text", "")
+    author = data.get("sender", "Viesturs")
+    respondent = data.get("respondent", "Bruno")
+    
     state["messages"].append({
         "id": len(state["messages"]) + 1,
-        "sender": respondent,
-        "text": reply,
-        "time": datetime.now().strftime("%H:%M"),
+        "sender": author,
+        "text": user_text,
+        "time": now
     })
     save_state_local(state)
-  except Exception as e:
-    print(f"Kļūda pie Bruno atbildes: {e}")
 
-  return jsonify({"status": "ok"})
+    try:
+        reply = ask_colleague(respondent, state["messages"])
+        state["messages"].append({
+            "id": len(state["messages"]) + 1,
+            "sender": respondent,
+            "text": reply,
+            "time": datetime.now().strftime("%H:%M")
+        })
+        save_state_local(state)
+    except Exception as e:
+        print(f"Kļūda pie Bruno atbildes: {e}")
+        
+    return jsonify({"status": "ok"})
 
-
-@app.route("/api/colleague_turn", methods=["POST"])
+@app.route('/api/colleague_turn', methods=['POST'])
 def colleague_turn():
-  if not verify_auth():
-    return jsonify({"error": "Unauthorized"}), 401
-  state = load_state()
-  data = request.json
-  colleague = data.get("colleague", "Leo")
+    if not verify_auth():
+        return jsonify({"error": "Unauthorized"}), 401
+    state = load_state()
+    data = request.json
+    colleague = data.get("colleague", "Leo")
 
-  try:
-    reply = ask_colleague(colleague, state["messages"])
-    state["messages"].append({
-        "id": len(state["messages"]) + 1,
-        "sender": colleague,
-        "text": reply,
-        "time": datetime.now().strftime("%H:%M"),
+    try:
+        reply = ask_colleague(colleague, state["messages"])
+        state["messages"].append({
+            "id": len(state["messages"]) + 1,
+            "sender": colleague,
+            "text": reply,
+            "time": datetime.now().strftime("%H:%M")
+        })
+        save_state_local(state)
+    except Exception as e:
+        print(f"Kļūda pie Leo atbildes: {e}")
+
+    return jsonify({"status": "ok"})
+
+@app.route('/api/task', methods=['POST'])
+def add_task():
+    if not verify_auth():
+        return jsonify({"error": "Unauthorized"}), 401
+    state = load_state()
+    data = request.json
+    state["tasks"].append({
+        "id": len(state["tasks"]) + 1,
+        "title": data.get("title", ""),
+        "status": "In Progress"
     })
     save_state_local(state)
-  except Exception as e:
-    print(f"Kļūda pie Leo atbildes: {e}")
+    return jsonify({"status": "ok"})
 
-  return jsonify({"status": "ok"})
-
-
-@app.route("/api/task", methods=["POST"])
-def add_task():
-  if not verify_auth():
-    return jsonify({"error": "Unauthorized"}), 401
-  state = load_state()
-  data = request.json
-  state["tasks"].append({
-      "id": len(state["tasks"]) + 1,
-      "title": data.get("title", ""),
-      "status": "In Progress",
-  })
-  save_state_local(state)
-  return jsonify({"status": "ok"})
-
-
-if __name__ == "__main__":
-  port = int(os.environ.get("PORT", 5000))
-  app.run(host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
