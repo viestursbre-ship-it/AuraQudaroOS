@@ -528,7 +528,7 @@ def add_message():
     try:
        reply = ask_colleague(
        data.get('respondent', 'Bruno'), state['messages'], state
-   )
+       )
        clean_reply = process_artifact_update(state, reply)
        state["messages"].append({"id": len(state["messages"]) + 1, "sender": data.get("respondent", "Bruno"), "text": clean_reply, "time": datetime.now().strftime("%H:%M")})
        save_state_local(state)
