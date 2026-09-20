@@ -95,6 +95,12 @@
       "sender": "Leo",
       "text": "Viestur, jūsu vīzija ir projekta dzinējspēks, mēs to pārvērtīsim realitātē. Bruno, gaidu tavas detalizētās arhitektūras specifikācijas, lai varētu sākt būvēt robustus Python servisus un efektīvu datu infrastruktūru. Mērķis ir maksimāla veiktspēja ar minimālu resursu patēriņu, lai Kvarks varētu mierīgi čučēt.",
       "time": "13:46"
+    },
+    {
+      "id": 17,
+      "sender": "Leo",
+      "text": "Lieliski, Bruno! Kamēr top detalizētās arhitektūras specifikācijas, es jau prātā skicēju API saskarnes un resursu orķestrēšanas loģiku šiem modulāriem Python servisiem. Datu integritāte un veiktspēja būs prioritāte, lai mūsu AI dzinējs rūktu klusi, bet jaudīgi, atbilstoši Kvarka miermīlīgajam garam. ⚡",
+      "time": "13:55"
     }
   ],
   "tasks": [
