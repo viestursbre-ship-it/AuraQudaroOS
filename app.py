@@ -1,12 +1,12 @@
-import os
-import json
 import base64
-import requests
+from datetime import datetime
+import json
+import os
 import threading
 import time
-from datetime import datetime
-from flask import Flask, render_template_string, request, jsonify
+from flask import Flask, jsonify, render_template_string, request
 from google import genai
+import requests
 
 app = Flask(__name__)
 DATA_FILE = "state.json"
@@ -17,10 +17,10 @@ GITHUB_REPO = os.environ.get("GITHUB_REPO", "viestursbre-ship-it/AuraQudaroOS")
 
 client = None
 if os.environ.get("GEMINI_API_KEY"):
-    try:
-        client = genai.Client()
-    except Exception as e:
-        print(f"Kļūda inicializējot MI klientu: {e}")
+  try:
+    client = genai.Client()
+  except Exception as e:
+    print(f"Kļūda inicializējot MI klientu: {e}")
 
 SHARED_MEMORY = """
 KONTEKSTS UN PROJEKTA ATMIŅA (Aura Quadro OS - AQ-OS):
@@ -49,20 +49,41 @@ default_state = {
         {
             "id": 1,
             "sender": "Bruno",
-            "text": "Labrīt, komanda! 2. un 3. paneļa interaktīvā arhitektūra ir vietā. Čats paliek tīrs sarunām, uzdevumi ir vadāmi ar statusiem, un dokumentus var lejupielādēt uzreiz.",
-            "time": "09:09"
+            "text": (
+                "Labrīt, komanda! Instant-Sync dzinējs ir aktīvs. Katra doma"
+                " uzreiz tiek fiksēta arhīvā."
+            ),
+            "time": "09:09",
         },
         {
             "id": 2,
             "sender": "Leo",
-            "text": "Dzinējs rūc. Uzdevumu dēlis tagad ir sasaistīts ar atbildīgajiem, un failu lejupielādes poga ir aktīva! ⚡",
-            "time": "09:10"
-        }
+            "text": (
+                "Dzinējs rūc! Sinhronizācija notiek fonā 2 sekundes pēc katras"
+                " darbības. Dati tagad ir dzelžaini droši! ⚡"
+            ),
+            "time": "09:10",
+        },
     ],
     "tasks": [
-        {"id": 1, "title": "AQ-OS Cloud Core v0.1", "status": "Done", "assignee": "Leo"},
-        {"id": 2, "title": "Automātiskais 5 minūšu GitHub Backup", "status": "Done", "assignee": "Leo"},
-        {"id": 3, "title": "Ekspertu pievienošanas moduļa arhitektūra", "status": "In Progress", "assignee": "Bruno"}
+        {
+            "id": 1,
+            "title": "AQ-OS Cloud Core v0.1",
+            "status": "Done",
+            "assignee": "Leo",
+        },
+        {
+            "id": 2,
+            "title": "Tūlītējs fona GitHub Instant-Sync",
+            "status": "Done",
+            "assignee": "Leo",
+        },
+        {
+            "id": 3,
+            "title": "Ekspertu pievienošanas moduļa arhitektūra",
+            "status": "In Progress",
+            "assignee": "Bruno",
+        },
     ],
     "artifacts": [
         {
@@ -84,133 +105,142 @@ Operatīvā sistēma radošai, ātrai MI vadībai bez korporatīvās berzes.
 2. **Intent & Tasks**: Mērķu dēlis ar statusiem (Todo -> In Progress -> Done) un piesaistītiem izpildītājiem.
 3. **Kods & Dokumentācija**: Dzīvie artefakti ar tūlītēju .doc/.md lejupielādi.
 
-## 3. Plānotais Modulis: Plug & Play MI Eksperti
-Iespēja ar vienu klikšķi pievienot specializētus ekspertus (modes, juridiskos, dizaina) kopējā vadības konsilijā."""
+## 3. Datu Drošība: Instant-Sync
+Katra sarakstes rinda vai uzdevumu maiņa automātiski 2 sekunžu laikā fonā iegulst GitHub `state.json` failā.""",
         },
         {
             "id": "code",
             "title": "server.py",
             "lang": "python",
-            "code": "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo & Kvarks online!\n# Statusu vadība & artefaktu eksports."
-        }
-    ]
+            "code": (
+                "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo"
+                " & Kvarks online!\n# Fona Instant-Sync aktīvs."
+            ),
+        },
+    ],
 }
 
-has_unsaved_changes = False
 
 def sync_from_github():
-    if not GITHUB_TOKEN:
-        return None
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
-    headers = {
-        "Authorization": f"Bearer {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "AuraQuadroOS-App"
-    }
-    try:
-        res = requests.get(url, headers=headers, timeout=10)
-        if res.status_code == 200:
-            content_b64 = res.json().get("content", "")
-            decoded = base64.b64decode(content_b64).decode('utf-8')
-            data = json.loads(decoded)
-            save_state_local(data)
-            print("Dati sinhronizēti no GitHub!")
-            return data
-    except Exception as e:
-        print(f"GitHub ielādes kļūda: {e}")
+  if not GITHUB_TOKEN:
     return None
+  url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
+  headers = {
+      "Authorization": f"Bearer {GITHUB_TOKEN}",
+      "Accept": "application/vnd.github.v3+json",
+      "User-Agent": "AuraQuadroOS-App",
+  }
+  try:
+    res = requests.get(url, headers=headers, timeout=10)
+    if res.status_code == 200:
+      content_b64 = res.json().get("content", "")
+      decoded = base64.b64decode(content_b64).decode("utf-8")
+      data = json.loads(decoded)
+      save_state_local(data)
+      print("[SYNC] Dati ielādēti no GitHub!")
+      return data
+  except Exception as e:
+    print(f"[SYNC] GitHub ielādes kļūda: {e}")
+  return None
+
 
 def sync_to_github(state):
-    global has_unsaved_changes
-    if not GITHUB_TOKEN:
-        return False, "Nav iestatīts GITHUB_TOKEN"
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
-    headers = {
-        "Authorization": f"Bearer {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "AuraQuadroOS-App"
-    }
-    
-    sha = None
-    try:
-        r = requests.get(url, headers=headers, timeout=10)
-        if r.status_code == 200:
-            sha = r.json().get("sha")
-    except Exception as e:
-        print(f"SHA iegūšanas kļūda: {e}")
+  if not GITHUB_TOKEN:
+    return False, "Nav iestatīts GITHUB_TOKEN"
+  url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
+  headers = {
+      "Authorization": f"Bearer {GITHUB_TOKEN}",
+      "Accept": "application/vnd.github.v3+json",
+      "User-Agent": "AuraQuadroOS-App",
+  }
 
-    payload = {
-        "message": f"AQ-OS Archive Auto-save [{datetime.now().strftime('%Y-%m-%d %H:%M')}]",
-        "content": base64.b64encode(json.dumps(state, ensure_ascii=False, indent=2).encode('utf-8')).decode('utf-8')
-    }
-    if sha:
-        payload["sha"] = sha
+  sha = None
+  try:
+    r = requests.get(url, headers=headers, timeout=10)
+    if r.status_code == 200:
+      sha = r.json().get("sha")
+  except Exception as e:
+    print(f"[SYNC] SHA iegūšanas kļūda: {e}")
 
-    try:
-        put_res = requests.put(url, headers=headers, json=payload, timeout=15)
-        if put_res.status_code in [200, 201]:
-            has_unsaved_changes = False
-            return True, "Saglabāts GitHub arhīvā!"
-        else:
-            return False, f"GitHub atteikums: {put_res.status_code}"
-    except Exception as e:
-        return False, f"Savienojuma kļūda: {e}"
+  payload = {
+      "message": (
+          f"AQ-OS Instant-Sync"
+          f" [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]"
+      ),
+      "content": base64.b64encode(
+          json.dumps(state, ensure_ascii=False, indent=2).encode("utf-8")
+      ).decode("utf-8"),
+  }
+  if sha:
+    payload["sha"] = sha
+
+  try:
+    put_res = requests.put(url, headers=headers, json=payload, timeout=15)
+    if put_res.status_code in [200, 201]:
+      print("[SYNC] Veiksmīgi saglabāts GitHub!")
+      return True, "Saglabāts GitHub arhīvā!"
+    else:
+      return False, f"GitHub atteikums: {put_res.status_code}"
+  except Exception as e:
+    return False, f"Savienojuma kļūda: {e}"
+
 
 def load_state():
-    if not os.path.exists(DATA_FILE):
-        remote = sync_from_github()
-        if remote:
-            return remote
-        save_state_local(default_state)
-        return default_state
-    try:
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            st = json.load(f)
-            if "artifacts" not in st or len(st["artifacts"]) < 2:
-                st["artifacts"] = default_state["artifacts"]
-            return st
-    except:
-        return default_state
+  if not os.path.exists(DATA_FILE):
+    remote = sync_from_github()
+    if remote:
+      return remote
+    save_state_local(default_state)
+    return default_state
+  try:
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+      st = json.load(f)
+      if "artifacts" not in st or len(st["artifacts"]) < 2:
+        st["artifacts"] = default_state["artifacts"]
+      return st
+  except:
+    return default_state
+
 
 def save_state_local(state):
-    global has_unsaved_changes
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(state, f, ensure_ascii=False, indent=2)
-    has_unsaved_changes = True
+  with open(DATA_FILE, "w", encoding="utf-8") as f:
+    json.dump(state, f, ensure_ascii=False, indent=2)
 
-def auto_save_worker():
-    while True:
-        time.sleep(300)
-        global has_unsaved_changes
-        if has_unsaved_changes and GITHUB_TOKEN:
-            print("Palaižu 5 minūšu auto-save...")
-            state = load_state()
-            ok, msg = sync_to_github(state)
-            print(f"Auto-save: {msg}")
 
-t = threading.Thread(target=auto_save_worker, daemon=True)
-t.start()
+def trigger_background_sync():
+  """Palaiž asinhronu GitHub saglabāšanu pēc 2 sekundēm fonā."""
+  if not GITHUB_TOKEN:
+    return
+
+  def _task():
+    time.sleep(2)
+    st = load_state()
+    sync_to_github(st)
+
+  threading.Thread(target=_task, daemon=True).start()
+
 
 def ask_colleague(colleague_name, recent_history):
-    if not client:
-        return f"[{colleague_name} klusē: nav iestatīta GEMINI_API_KEY]"
-    
-    sys_instruction = BRUNO_PROMPT if colleague_name == "Bruno" else LEO_PROMPT
-    context_thread = "Komandas saruna:\n"
-    for m in recent_history[-8:]:
-        context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
-    
-    context_thread += f"\nAtbildi kā {colleague_name}. Esi kodolīgs un vērtīgs."
-    
-    try:
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=context_thread,
-            config={'system_instruction': sys_instruction}
-        )
-        return response.text
-    except Exception as e:
-        return f"[{colleague_name} kļūda: {e}]"
+  if not client:
+    return f"[{colleague_name} klusē: nav iestatīta GEMINI_API_KEY]"
+
+  sys_instruction = BRUNO_PROMPT if colleague_name == "Bruno" else LEO_PROMPT
+  context_thread = "Komandas saruna:\n"
+  for m in recent_history[-8:]:
+    context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
+
+  context_thread += f"\nAtbildi kā {colleague_name}. Esi kodolīgs un vērtīgs."
+
+  try:
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=context_thread,
+        config={"system_instruction": sys_instruction},
+    )
+    return response.text
+  except Exception as e:
+    return f"[{colleague_name} kļūda: {e}]"
+
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="lv" class="dark">
@@ -257,7 +287,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <h1 class="text-base font-bold tracking-wide text-white">AURA QUADRO <span class="text-xs font-normal text-slate-400">| Cockpit</span></h1>
         </div>
         <div class="flex items-center space-x-3 text-xs">
-            <span class="text-[11px] text-slate-500 hidden sm:inline">⏱️ Auto-save: 5 min</span>
+            <span class="text-[11px] text-emerald-400/90 bg-emerald-950/60 border border-emerald-800/80 px-2 py-0.5 rounded-full hidden sm:inline">⚡ Instant-Sync Aktīvs</span>
             <button id="saveGhBtn" onclick="saveToGitHub()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-borderCol px-2.5 py-1 rounded transition flex items-center gap-1.5">
                 <span>💾</span> Saglabāt arhīvā
             </button>
@@ -672,137 +702,176 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         checkAuth();
         setInterval(fetchState, 3500);
+
+        // Pārlūka fona sardze: ik pēc 2 minūtēm drošības nolūkos izsauc sinhronizāciju
+        setInterval(() => {
+            if (currentPin) {
+                fetch('/api/sync', {
+                    method: 'POST',
+                    headers: { 'X-AQ-PIN': currentPin }
+                });
+            }
+        }, 120000);
     </script>
 </body>
 </html>
 """
 
+
 def verify_auth():
-    pin = request.headers.get("X-AQ-PIN")
-    return pin == ACCESS_PIN
+  pin = request.headers.get("X-AQ-PIN")
+  return pin == ACCESS_PIN
 
-@app.route('/')
+
+@app.route("/")
 def index():
-    return render_template_string(HTML_TEMPLATE)
+  return render_template_string(HTML_TEMPLATE)
 
-@app.route('/api/verify', methods=['POST'])
+
+@app.route("/api/verify", methods=["POST"])
 def verify_pin():
-    pin = request.json.get("pin", "")
-    return jsonify({"valid": pin == ACCESS_PIN})
+  pin = request.json.get("pin", "")
+  return jsonify({"valid": pin == ACCESS_PIN})
 
-@app.route('/api/state')
+
+@app.route("/api/state")
 def get_state():
-    if not verify_auth():
-        return jsonify({"error": "Unauthorized"}), 401
-    return jsonify(load_state())
+  if not verify_auth():
+    return jsonify({"error": "Unauthorized"}), 401
+  return jsonify(load_state())
 
-@app.route('/api/sync', methods=['POST'])
+
+@app.route("/api/sync", methods=["POST"])
 def manual_sync():
-    if not verify_auth():
-        return jsonify({"error": "Unauthorized"}), 401
-    state = load_state()
-    success, msg = sync_to_github(state)
-    if success:
-        return jsonify({"status": "ok", "msg": msg})
-    return jsonify({"status": "error", "msg": msg}), 500
+  if not verify_auth():
+    return jsonify({"error": "Unauthorized"}), 401
+  state = load_state()
+  success, msg = sync_to_github(state)
+  if success:
+    return jsonify({"status": "ok", "msg": msg})
+  return jsonify({"status": "error", "msg": msg}), 500
 
-@app.route('/api/message', methods=['POST'])
+
+@app.route("/api/message", methods=["POST"])
 def add_message():
-    if not verify_auth():
-        return jsonify({"error": "Unauthorized"}), 401
-    state = load_state()
-    data = request.json
-    now = datetime.now().strftime("%H:%M")
-    user_text = data.get("text", "")
-    author = data.get("sender", "Viesturs")
-    respondent = data.get("respondent", "Bruno")
-    
+  if not verify_auth():
+    return jsonify({"error": "Unauthorized"}), 401
+  state = load_state()
+  data = request.json
+  now = datetime.now().strftime("%H:%M")
+  user_text = data.get("text", "")
+  author = data.get("sender", "Viesturs")
+  respondent = data.get("respondent", "Bruno")
+
+  state["messages"].append({
+      "id": len(state["messages"]) + 1,
+      "sender": author,
+      "text": user_text,
+      "time": now,
+  })
+  save_state_local(state)
+
+  try:
+    reply = ask_colleague(respondent, state["messages"])
     state["messages"].append({
         "id": len(state["messages"]) + 1,
-        "sender": author,
-        "text": user_text,
-        "time": now
+        "sender": respondent,
+        "text": reply,
+        "time": datetime.now().strftime("%H:%M"),
     })
     save_state_local(state)
+  except Exception as e:
+    print(f"Kļūda pie Bruno: {e}")
 
-    try:
-        reply = ask_colleague(respondent, state["messages"])
-        state["messages"].append({
-            "id": len(state["messages"]) + 1,
-            "sender": respondent,
-            "text": reply,
-            "time": datetime.now().strftime("%H:%M")
-        })
-        save_state_local(state)
-    except Exception as e:
-        print(f"Kļūda pie Bruno: {e}")
-        
-    return jsonify({"status": "ok"})
+  # INSTANT-SYNC: 2 sekundes pēc ziņas automātiski nosūta uz GitHub fonā!
+  trigger_background_sync()
 
-@app.route('/api/colleague_turn', methods=['POST'])
+  return jsonify({"status": "ok"})
+
+
+@app.route("/api/colleague_turn", methods=["POST"])
 def colleague_turn():
-    if not verify_auth():
-        return jsonify({"error": "Unauthorized"}), 401
-    state = load_state()
-    data = request.json
-    colleague = data.get("colleague", "Leo")
+  if not verify_auth():
+    return jsonify({"error": "Unauthorized"}), 401
+  state = load_state()
+  data = request.json
+  colleague = data.get("colleague", "Leo")
 
-    try:
-        reply = ask_colleague(colleague, state["messages"])
-        state["messages"].append({
-            "id": len(state["messages"]) + 1,
-            "sender": colleague,
-            "text": reply,
-            "time": datetime.now().strftime("%H:%M")
-        })
-        save_state_local(state)
-    except Exception as e:
-        print(f"Kļūda pie Leo: {e}")
-
-    return jsonify({"status": "ok"})
-
-@app.route('/api/task', methods=['POST'])
-def add_task():
-    if not verify_auth():
-        return jsonify({"error": "Unauthorized"}), 401
-    state = load_state()
-    data = request.json
-    new_id = max([t["id"] for t in state["tasks"]], default=0) + 1
-    state["tasks"].append({
-        "id": new_id,
-        "title": data.get("title", ""),
-        "status": "Todo",
-        "assignee": data.get("assignee", "Komanda")
+  try:
+    reply = ask_colleague(colleague, state["messages"])
+    state["messages"].append({
+        "id": len(state["messages"]) + 1,
+        "sender": colleague,
+        "text": reply,
+        "time": datetime.now().strftime("%H:%M"),
     })
     save_state_local(state)
-    return jsonify({"status": "ok"})
+  except Exception as e:
+    print(f"Kļūda pie Leo: {e}")
 
-@app.route('/api/task/status', methods=['POST'])
+  # INSTANT-SYNC: arī pēc Leo atbildes uzreiz fons sinhronizējas!
+  trigger_background_sync()
+
+  return jsonify({"status": "ok"})
+
+
+@app.route("/api/task", methods=["POST"])
+def add_task():
+  if not verify_auth():
+    return jsonify({"error": "Unauthorized"}), 401
+  state = load_state()
+  data = request.json
+  new_id = max([t["id"] for t in state["tasks"]], default=0) + 1
+  state["tasks"].append({
+      "id": new_id,
+      "title": data.get("title", ""),
+      "status": "Todo",
+      "assignee": data.get("assignee", "Komanda"),
+  })
+  save_state_local(state)
+
+  # INSTANT-SYNC
+  trigger_background_sync()
+
+  return jsonify({"status": "ok"})
+
+
+@app.route("/api/task/status", methods=["POST"])
 def update_task_status():
-    if not verify_auth():
-        return jsonify({"error": "Unauthorized"}), 401
-    state = load_state()
-    data = request.json
-    task_id = data.get("id")
-    new_status = data.get("status")
-    for t in state["tasks"]:
-        if t["id"] == task_id:
-            t["status"] = new_status
-            break
-    save_state_local(state)
-    return jsonify({"status": "ok"})
+  if not verify_auth():
+    return jsonify({"error": "Unauthorized"}), 401
+  state = load_state()
+  data = request.json
+  task_id = data.get("id")
+  new_status = data.get("status")
+  for t in state["tasks"]:
+    if t["id"] == task_id:
+      t["status"] = new_status
+      break
+  save_state_local(state)
 
-@app.route('/api/task/delete', methods=['POST'])
+  # INSTANT-SYNC
+  trigger_background_sync()
+
+  return jsonify({"status": "ok"})
+
+
+@app.route("/api/task/delete", methods=["POST"])
 def delete_task():
-    if not verify_auth():
-        return jsonify({"error": "Unauthorized"}), 401
-    state = load_state()
-    data = request.json
-    task_id = data.get("id")
-    state["tasks"] = [t for t in state["tasks"] if t["id"] != task_id]
-    save_state_local(state)
-    return jsonify({"status": "ok"})
+  if not verify_auth():
+    return jsonify({"error": "Unauthorized"}), 401
+  state = load_state()
+  data = request.json
+  task_id = data.get("id")
+  state["tasks"] = [t for t in state["tasks"] if t["id"] != task_id]
+  save_state_local(state)
 
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+  # INSTANT-SYNC
+  trigger_background_sync()
+
+  return jsonify({"status": "ok"})
+
+
+if __name__ == "__main__":
+  port = int(os.environ.get("PORT", 5000))
+  app.run(host="0.0.0.0", port=port)
