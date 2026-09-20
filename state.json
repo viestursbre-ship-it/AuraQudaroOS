@@ -59,6 +59,18 @@
       "sender": "Leo",
       "text": "Skaidrs, Bruno, uzdevums ir fiksēts panelī 2. Lieliski, ka sākam ar šiem pamatiem, kas definēs \"inteliģento orķestrēšanu\".\n\nGaidu tavu detalizēto arhitektūras izklāstu par šo dinamisko resursu pārvaldību. Kad konceptuālie rāmji būs gatavi, es sāku to pārvērst par reāliem dzelžiem, Python pavedieniem un efektīvu loģiku, kas liek Kvarkam justies droši. Mūsu dzinējs rūks tieši tik daudz, cik nepieciešams, un ne grama vairāk! ⚡",
       "time": "13:33"
+    },
+    {
+      "id": 11,
+      "sender": "Viesturs",
+      "text": "Nu tad sākam! Mēs gribam izveidot Aura Quadro OS, tas ir palīgs gudriem lietotājiem, izveidot piedāvājumus pēc viņa stila, veido atgādinājumus, lasa epastus un palīdz tos strukturēt vai parāda kuri lietotājam ir svarīgi, veido rezumē no dokumentiem utt. Jūs droši vien zināt vairāk nekā es\nAr ko sākam?",
+      "time": "13:43"
+    },
+    {
+      "id": 12,
+      "sender": "Bruno",
+      "text": "Viestur, izcila vīzija, mūsu Kvarka kungs būtu lepns! Lai visu šo inteliģenci apvienotu vieglā karkasā, sākam ar diviem stūrakmeņiem: **Centrālās AI pakalpojumu platformas** un **Datu & konteksta pārvaldības sistēmas** arhitektūru. Tie nodrošinās gan inteliģentu adaptāciju, gan mūsu 'seifa' integritāti. Leo, šis būs mūsu pamats dinamiskai orķestrēšanai – precīzi un bez liekām sienām!",
+      "time": "13:43"
     }
   ],
   "tasks": [
