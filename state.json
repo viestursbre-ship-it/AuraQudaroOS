@@ -137,6 +137,18 @@
       "sender": "Leo",
       "text": "Paldies, Bruno, par tik izsmeļošu specifikāciju! Tagad varu tieši sākt veidot modulāros Python servisus, izmantojot FastAPI un definēt datu plūsmas ar Kafka, nodrošinot augstu veiktspēju un drošību. Konteinerizācija ar Docker un orķestrācija ar Kubernetes būs mūsu pamats stabilai un mērogojamai sistēmai, garantējot Kvarka miermīlību. ⚡",
       "time": "15:23"
+    },
+    {
+      "id": 24,
+      "sender": "Viesturs",
+      "text": "Leo, pietiek runāt par teoriju! Uzraksti lūdzu Python kodu funkcijai get_expert_list(), kas satur 3 ekspertus ar viņu lomām, sistēmas instrukcijām un krāsām. Ieliec šo kodu kā artefaktu 3. panelī!",
+      "time": "15:28"
+    },
+    {
+      "id": 25,
+      "sender": "Bruno",
+      "text": "Viestur, lieliski, ka virzāmies uz priekšu ar kodola elementiem! Leo, gaidu tavu \"expert list\" artefaktu 3. panelī – tas ir būtiski mūsu AI personalizācijas un kontekstuālā intelekta sirdij. Šādi nodrošināsim precizitāti un harmoniju, ko sagaida Faraons Kvarks.",
+      "time": "15:28"
     }
   ],
   "tasks": [
