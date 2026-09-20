@@ -233,6 +233,18 @@
       "sender": "Leo",
       "text": "Viestur, Faraons Kvarks drīz murrās! Saglabā šo kodu failā `main.py` savā `aq-os-gateway` mapītē. Tad atver termināli tieši šajā mapītē un palaid `uvicorn main:app --reload`. Tas ieslēgs mūsu API Vārteju un ļaus tai dziedāt uz tava portatīvā! 🚀",
       "time": "16:48"
+    },
+    {
+      "id": 40,
+      "sender": "Viesturs",
+      "text": "fastapi un uvicorn uzinstalēju, bet man dators saka, ka nezin uvicorn kā komandu, kas varētu būt?",
+      "time": "16:55"
+    },
+    {
+      "id": 41,
+      "sender": "Leo",
+      "text": "Viestur, Faraons Kvarks mierīgi gaida! Ja `uvicorn` nav tieši pieejams, mēģini palaist to kā Python moduli no tās pašas `aq-os-gateway` mapītes: `python -m uvicorn main:app --reload`. Tas nodrošinās, ka pareizais uvicorn tiek atrasts un mūsu API Vārteja sāks dziedāt! 🎶",
+      "time": "16:55"
     }
   ],
   "tasks": [
