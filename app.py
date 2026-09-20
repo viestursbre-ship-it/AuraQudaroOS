@@ -161,13 +161,28 @@ def process_artifact_update(state, text):
         clean_text = re.sub(r'```artifact:code\s*.*?\s*```', '', clean_text, flags=re.DOTALL).strip()
     return clean_text
 
-def ask_colleague(colleague_name, recent_history):
-    if not client: return f"[{colleague_name} bez API atslēgas]"
-    sys_instruction = BRUNO_PROMPT if colleague_name == "Bruno" else LEO_PROMPT
-    context_thread = "Saruna:\n"
-    for m in recent_history[-8:]:
-        context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
-    context_thread += f"\nAtbildi kā {colleague_name}."
+def ask_colleague(colleague_name, recent_history, state=None):
+  if not client:
+    return f'[{colleague_name} bez API atslēgas]'
+  sys_instruction = BRUNO_PROMPT if colleague_name == 'Bruno' else LEO_PROMPT
+  context_thread = 'Saruna:\n'
+  for m in recent_history[-8:]:
+    context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
+
+  # Ja pie darba ķeras Leo vai Bruno, pievienojam aktuālo 3. paneļa dokumentu!
+  if state:
+    current_doc = ''
+    for art in state.get('artifacts', []):
+      if art['id'] == 'doc':
+        current_doc = art.get('code', '')
+        break
+    if current_doc:
+      context_thread += (
+          '\n--- AKTUĀLĀ SISTĒMAS SPECIFIKĀCIJA (3. PANELIS) ---\n'
+          f'{current_doc}\n---------------------------------------------------\n'
+      )
+
+  context_thread += f'\nAtbildi kā {colleague_name}.'
     try:
         response = client.models.generate_content(
             model='gemini-2.5-flash',
@@ -511,7 +526,9 @@ def add_message():
     save_state_local(state)
 
     try:
-        reply = ask_colleague(data.get("respondent", "Bruno"), state["messages"])
+        reply = ask_colleague(
+       data.get('respondent', 'Bruno'), state['messages'], state
+   )
         clean_reply = process_artifact_update(state, reply)
         state["messages"].append({"id": len(state["messages"]) + 1, "sender": data.get("respondent", "Bruno"), "text": clean_reply, "time": datetime.now().strftime("%H:%M")})
         save_state_local(state)
@@ -526,7 +543,9 @@ def colleague_turn():
     if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
     state = load_state()
     try:
-        reply = ask_colleague(request.json.get("colleague", "Leo"), state["messages"])
+        reply = ask_colleague(
+       request.json.get('colleague', 'Leo'), state['messages'], state
+   )
         clean_reply = process_artifact_update(state, reply)
         state["messages"].append({"id": len(state["messages"]) + 1, "sender": request.json.get("colleague", "Leo"), "text": clean_reply, "time": datetime.now().strftime("%H:%M")})
         save_state_local(state)
