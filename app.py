@@ -291,7 +291,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div class="flex-1 p-3 overflow-hidden flex flex-col">
                 <span id="artifactTitle" class="text-emerald-400 text-xs font-semibold mb-2">AQ_SYSTEM_SPEC.md</span>
                 <div class="flex-1 bg-slate-950 rounded-lg p-3 overflow-auto border border-borderCol">
-                    <pre class="whitespace-pre-wrap"><code id="artifactCode" class="text-xs font-mono whitespace-pre-wrap"></code></pre>
+                    <pre class="whitespace-pre overflow-x-auto"><code id="artifactCode" class="text-xs font-mono"></code></pre>
                 </div>
             </div>
         </section>
@@ -357,8 +357,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const target = allArtifacts.find(a => a.id === activeTab) || allArtifacts[0];
             document.getElementById('artifactTitle').innerText = target.title;
             const el = document.getElementById('artifactCode');
-            el.className = target.lang === 'markdown' ? 'language-markdown text-xs font-mono whitespace-pre-wrap' : 'language-python text-xs font-mono whitespace-pre-wrap';
-            el.innerText = target.code;
+            el.className = target.lang === 'markdown' ? 'language-markdown text-xs font-mono' : 'language-python text-xs font-mono';
+            // Izmantojam textContent, lai saglabātu precīzas rindas un atstarpes
+            el.textContent = target.code;
             if (window.hljs) hljs.highlightElement(el);
         }
 
