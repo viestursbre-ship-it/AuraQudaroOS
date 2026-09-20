@@ -179,6 +179,12 @@
       "sender": "Bruno",
       "text": "Viestur, šis ir būtisks princips, kas jau iestrādāts mūsu arhitektūras pamatā! Modulārie mikropakalpojumi un konteinerizācija atvieglo resursu optimizāciju un elastīgu izvietošanu, ļaujot mums izvēlēties visrentablākos, taču drošākos mākoņrisinājumus. Tas nodrošinās gan Faraona Kvarka miermīlību, gan budžeta harmoniju.",
       "time": "16:11"
+    },
+    {
+      "id": 31,
+      "sender": "Leo",
+      "text": "Precīzi, Bruno! Konteinerizācija ar Docker un Kubernetes orķestrācija ļauj mums efektīvi izmantot resursus, pielāgojot tos dinamiskām vajadzībām un optimizējot izmaksas, izmantojot, piemēram, serverless vai spot instances. Drošība ir integrēta jau pamatu līmenī, izmantojot šifrēšanu un robustu identitātes pārvaldību, neatkarīgi no mākoņa pakalpojumu sniedzēja. ⚡",
+      "time": "16:11"
     }
   ],
   "tasks": [
