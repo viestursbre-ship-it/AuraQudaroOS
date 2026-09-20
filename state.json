@@ -215,6 +215,12 @@
       "sender": "Bruno",
       "text": "Lielisks pienesums, Viestur, un sveicieni MI brālim par aso aci! Viņam ir pilnīga taisnība – mūsu arhitektūra ar Docker un Kubernetes mīt mākoņos, nodrošinot Faraona Kvarka mieru.\n\nLeo, pamats ir – dodam Viesturam tīru Python moduli startam, kas mūs virzīs uz priekšu bez liekiem apgrūtinājumiem lokāli, jo Render jau rūpējas par konteinerizāciju. Šis pragmatisms ir zelta vērts!",
       "time": "16:26"
+    },
+    {
+      "id": 37,
+      "sender": "Leo",
+      "text": "Absolūti, Viestur un MI brāli! Mana inženiera sirds piekrīt pragmatismam. Lai AQ-OS kodols lokāli murrā bez smagajiem Dokera dzinējiem, izveido `aq-os-gateway` mapīti, iekopē tajā šo Python failu, instalē nepieciešamās bibliotēkas (`pip install fastapi uvicorn`) un palaid ar `uvicorn main:app --reload`. Tādējādi mūsu API Vārteja sāks dziedāt pat uz portatīvā datora, saglabājot Faraona Kvarka mieru! ⚡",
+      "time": "16:26"
     }
   ],
   "tasks": [
@@ -248,7 +254,7 @@
       "id": "code",
       "title": "server.py",
       "lang": "python",
-      "code": "# Projekta sākšana:\n# 1. Izveidojiet jaunu mapi: `mkdir aq-os-gateway && cd aq-os-gateway`\n# 2. Saglabājiet zemāk redzamos failus attiecīgajās vietās šajā mapē.\n# 3. Palaidiet: `docker-compose up -d`\n# Pēc tam varat atvērt pārlūkā `http://localhost:8000/status` vai `http://localhost:8000`, lai redzētu, kā AQ-OS API Vārteja murrā.\n\n# Failu saraksts (ievietot mapē `aq-os-gateway`):\n\n# app.py\n# -----\nfrom fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get(\"/\")\nasync def root():\n    return {\"message\": \"Aura Quadro OS API Gateway ir iedarbināta un murrā! 🚀\"}\n\n@app.get(\"/status\")\nasync def status():\n    return {\"status\": \"Operational\", \"version\": \"0.1-alpha\", \"message\": \"Faraons Kvarks ir mierīgs.\"}\n\n# Dockerfile\n# ----------\nFROM python:3.9-slim-buster\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY . .\nEXPOSE 8000\nCMD [\"uvicorn\", \"app:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"]\n\n# requirements.txt\n# ----------------\nfastapi\nuvicorn\n\n# docker-compose.yml\n# ------------------\nversion: '3.8'\n\nservices:\n  api-gateway:\n    build:\n      context: .\n      dockerfile: Dockerfile\n    ports:\n      - \"8000:8000\"\n    healthcheck:\n      test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:8000/status\"]\n      interval: 30s\n      timeout: 10s\n      retries: 3\n    restart: unless-stopped\n    # Ja attīstības laikā vēlies redzēt koda izmaiņas bez konteinera pārbūves,\n    # vari noņemt komentāru no volumes sadaļas zemāk:\n    # volumes:\n    #   - .:/app"
+      "code": "# main.py\n# Lai palaistu lokāli, vispirms instalē nepieciešamās bibliotēkas:\n# pip install fastapi uvicorn\n\nfrom fastapi import FastAPI\n\n# Izveidojam FastAPI aplikāciju, kas kalpos kā mūsu AQ-OS API Vārteja.\n# Tas ir kā durvju sargs uz Faraona Kvarka svētnīcu, bet ar smaidu!\napp = FastAPI(\n    title=\"AQ-OS API Vārteja (lokālais Kvarks)\",\n    description=\"Sākuma punkts mūsu inteliģentajai sistēmai – mierīgi un efektīvi, pat uz portatīvā!\"\n)\n\n@app.get(\"/\")\nasync def root():\n    \"\"\"\n    Sagaidīšanas ziņojums, kad AQ-OS API Vārteja ir veiksmīgi palaista.\n    Faraons Kvarks ir apmierināts!\n    \"\"\"\n    return {\"message\": \"Sveiks, Viestur! AQ-OS API Vārteja sāk savu darbu – Faraons Kvarks murrā apmierinātībā!\"}\n\n@app.get(\"/status\")\nasync def status():\n    \"\"\"\n    Parāda API Vārtejas pašreizējo statusu.\n    Gatavs peldēt mākoņos vai uz tavas tastatūras!\n    \"\"\"\n    return {\"status\": \"online\", \"version\": \"0.0.1-alfa\", \"message\": \"Gatavs peldēt mākoņos!\"}\n\n# Kā palaist (no termināļa, atrodoties tajā pašā mapītē, kur ir main.py):\n# uvicorn main:app --reload\n# Pēc tam vari atvērt pārlūkprogrammā: http://127.0.0.1:8000/\n# Un Swagger UI (dokumentācija): http://127.0.0.1:8000/docs"
     }
   ]
 }
