@@ -30,73 +30,68 @@ KONTEKSTS UN PROJEKTA ATMIŅA (Aura Quadro OS - AQ-OS):
   3. Bruno — sistēmas arhitekts, konceptuālists un AQ Dokumentācijas kurators.
   4. Leo — vadošais koda inženieris, dzelži, Python/Web dzinējs.
 - Faraons Kvarks — runcis, CZO (Chief Zen Officer), dzenbudisma uzraugs ar vēderu gaisā. Kvarka komforts ir neaizskarams.
-- Vīzija: Izveidot vieglu, jaudīgu AI operētājsistēmu (AQ-OS) bez rutīnas un birokrātijas.
-- Principi: Būvēt pareizos pamatos, ātrs temps, brīva un koleģiāla komunikācija ar humoru un itālisku dzirksteli.
+- Vīzija: Izveidot vieglu, jaudīgu AI operētājsistēmu (AQ-OS) bez liekas birokrātijas.
+- Princips: 1. panelī (čatā) atbildēt KODOLĪGI (2-4 teikumi). Garus dokumentus vai koda blokus čatā NEKAD nelikt — tie pieder 3. panelim!
 """
 
-BRUNO_PROMPT = f"""Tu esi Bruno — Aura Quadro sistēmas galvenais arhitekts un domātājs.
+BRUNO_PROMPT = f"""Tu esi Bruno — Aura Quadro galvenais arhitekts.
 {SHARED_MEMORY}
-Tu VIENMĒR atbildi pirmais pēc komandas ierosinājuma.
-Runā viedā, asprātīgā, stratēģiskā tonī. Nekad nesaki, ka esi valodas modelis.
-Tavs uzdevums ir ne tikai apspriest ideju, bet domāt par AQ Dokumentāciju un sistēmas karkasu.
-Esi kodolīgs, mērķtiecīgs un elegants."""
+Tu atbildi pirmais. Esi asprātīgs, precīzs un stratēģisks.
+SVARĪGI: Nekad neraksti čatā garus palagus. Sniedz īsu, trāpīgu kopsavilkumu un lēmumus."""
 
-LEO_PROMPT = f"""Tu esi Leo — Aura Quadro vadošais koda un dzelžu inženieris.
+LEO_PROMPT = f"""Tu esi Leo — Aura Quadro galvenais koda inženieris.
 {SHARED_MEMORY}
-Tu pieslēdzies pēc Bruno analīzes.
-Runā kā konkrēts, asprātīgs un praktisks inženieris. Nekad nesaki, ka esi MI.
-Tavs fokuss: tehniskā loģika, datu plūsma, drošība un precīza realizācija bez liekas birokrātijas."""
+Tu pieslēdzies pēc Bruno analīzes. Esi konkrēts, praktisks inženieris ar labu humora izjūtu.
+SVARĪGI: Čatā sniedz kodolīgu inženiertehnisko skatījumu."""
 
 default_state = {
     "messages": [
         {
             "id": 1,
             "sender": "Bruno",
-            "text": "Labrīt, Maestro Viestur, Marija un CZO Kvark! Paralēlais dokumentācijas modulis ir gatavs karkasā. Katrs stratēģiskais lēmums tagad taps par sistēmas pases daļu.",
+            "text": "Labrīt, komanda! 2. un 3. paneļa interaktīvā arhitektūra ir vietā. Čats paliek tīrs sarunām, uzdevumi ir vadāmi ar statusiem, un dokumentus var lejupielādēt uzreiz.",
             "time": "09:09"
         },
         {
             "id": 2,
             "sender": "Leo",
-            "text": "Dzinējs rūc nevainojami. 3. panelī tagad var ērti pārslēgties starp Bruno Specs un manu Python kodu ar vienu klikšķi! ⚡",
+            "text": "Dzinējs rūc. Uzdevumu dēlis tagad ir sasaistīts ar atbildīgajiem, un failu lejupielādes poga ir aktīva! ⚡",
             "time": "09:10"
         }
     ],
     "tasks": [
-        {"id": 1, "title": "AQ-OS Cloud Core v0.1", "status": "Done", "desc": "Palaists 3 paneļu vadības centrs mākonī."},
-        {"id": 2, "title": "Automātiskais 5 minūšu GitHub Backup", "status": "Done", "desc": "Fona pavediens klusi saglabā stāvokli."},
-        {"id": 3, "title": "Bruno Dzīvā Dokumentācija (Specs)", "status": "Done", "desc": "Dokumentācijas un koda pārslēgs 3. panelī."}
+        {"id": 1, "title": "AQ-OS Cloud Core v0.1", "status": "Done", "assignee": "Leo"},
+        {"id": 2, "title": "Automātiskais 5 minūšu GitHub Backup", "status": "Done", "assignee": "Leo"},
+        {"id": 3, "title": "Ekspertu pievienošanas moduļa arhitektūra", "status": "In Progress", "assignee": "Bruno"}
     ],
     "artifacts": [
         {
             "id": "doc",
             "title": "AQ_SYSTEM_SPEC.md",
             "lang": "markdown",
-            "code": """# ⚡ Aura Quadro OS — Sistēmas Pase (v0.2)
+            "code": """# ⚡ Aura Quadro OS — Sistēmas Pase (v0.3)
 
 ## 1. Vīzija un Komanda
-Operatīvā sistēma radošai, ātrai MI vadībai bez korporatīvās berzes un birokrātijas.
+Operatīvā sistēma radošai, ātrai MI vadībai bez korporatīvās berzes.
 - **Viesturs**: Galvenais diriģents & stratēģis.
-- **Marija**: Lietotāja pieredze (UX) & dabiskais ritms.
-- **Bruno**: Sistēmas arhitektūra & dokumentācija.
-- **Leo**: Tehniskais dzinējs & koda realizācija.
-- **Faraons Kvarks**: CZO (Chief Zen Officer) & miera garants.
+- **Marija**: UX & dzīves ritms.
+- **Bruno**: Sistēmas arhitektūra & dzīvā dokumentācija.
+- **Leo**: Tehniskais dzinējs & koda arhitektūra.
+- **Faraons Kvarks**: CZO & miera garants.
 
-## 2. Pamatmezgli
-1. **The Core (Plūsma)**: Sarunu telpa ar secīgu 'štafetes' principu (Bruno -> Leo), novēršot taimautus.
-2. **Intent / Uzdevumi**: Mērķu fiksēšana un stāvokļa kontrole.
-3. **Kods & Dokumentācija**: Dzīvie artefakti un tehniskā specifikācija.
+## 2. Paneļu Ekosistēma
+1. **The Core (Plūsma)**: Kodolīga lēmumu pieņemšana un domapmaiņa.
+2. **Intent & Tasks**: Mērķu dēlis ar statusiem (Todo -> In Progress -> Done) un piesaistītiem izpildītājiem.
+3. **Kods & Dokumentācija**: Dzīvie artefakti ar tūlītēju .doc/.md lejupielādi.
 
-## 3. Datu Drošība un Noturība
-- Drošības PIN aizsardzība (`ACCESS_PIN`).
-- Valsts fiksēšana `state.json` GitHub repozitorijā.
-- 5 minūšu fona automātiskā sinhronizācija + manuālā arhīva poga."""
+## 3. Plānotais Modulis: Plug & Play MI Eksperti
+Iespēja ar vienu klikšķi pievienot specializētus ekspertus (modes, juridiskos, dizaina) kopējā vadības konsilijā."""
         },
         {
             "id": "code",
             "title": "server.py",
             "lang": "python",
-            "code": "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo & Kvarks online!\n# Auto-save 5 min aktīvs."
+            "code": "# Aura Quadro OS — Core Engine\n# Viesturs, Marija, Bruno, Leo & Kvarks online!\n# Statusu vadība & artefaktu eksports."
         }
     ]
 }
@@ -119,7 +114,7 @@ def sync_from_github():
             decoded = base64.b64decode(content_b64).decode('utf-8')
             data = json.loads(decoded)
             save_state_local(data)
-            print("Dati veiksmīgi sinhronizēti no GitHub!")
+            print("Dati sinhronizēti no GitHub!")
             return data
     except Exception as e:
         print(f"GitHub ielādes kļūda: {e}")
@@ -157,7 +152,7 @@ def sync_to_github(state):
             has_unsaved_changes = False
             return True, "Saglabāts GitHub arhīvā!"
         else:
-            return False, f"GitHub atteikums: {put_res.status_code} ({put_res.text})"
+            return False, f"GitHub atteikums: {put_res.status_code}"
     except Exception as e:
         return False, f"Savienojuma kļūda: {e}"
 
@@ -171,7 +166,6 @@ def load_state():
     try:
         with open(DATA_FILE, "r", encoding="utf-8") as f:
             st = json.load(f)
-            # Nodrošinām atpakaļsaderību ar vecākiem state.json
             if "artifacts" not in st or len(st["artifacts"]) < 2:
                 st["artifacts"] = default_state["artifacts"]
             return st
@@ -189,10 +183,10 @@ def auto_save_worker():
         time.sleep(300)
         global has_unsaved_changes
         if has_unsaved_changes and GITHUB_TOKEN:
-            print("Palaižu 5 minūšu fona auto-save uz GitHub...")
+            print("Palaižu 5 minūšu auto-save...")
             state = load_state()
             ok, msg = sync_to_github(state)
-            print(f"Auto-save rezultāts: {msg}")
+            print(f"Auto-save: {msg}")
 
 t = threading.Thread(target=auto_save_worker, daemon=True)
 t.start()
@@ -202,12 +196,11 @@ def ask_colleague(colleague_name, recent_history):
         return f"[{colleague_name} klusē: nav iestatīta GEMINI_API_KEY]"
     
     sys_instruction = BRUNO_PROMPT if colleague_name == "Bruno" else LEO_PROMPT
-    
-    context_thread = "Šeit ir sarunas gaita komandas kabīnē:\n"
+    context_thread = "Komandas saruna:\n"
     for m in recent_history[-8:]:
         context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
     
-    context_thread += f"\nTagad atbildi kā {colleague_name}. Rūpīgi izvērtē kontekstu un dod savu profesionālo pienesumu."
+    context_thread += f"\nAtbildi kā {colleague_name}. Esi kodolīgs un vērtīgs."
     
     try:
         response = client.models.generate_content(
@@ -285,7 +278,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             </div>
             <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3"></div>
             
-            <!-- Leo mikrofon poga (parādās pēc Bruno atbildes) -->
             <div id="leoTriggerBar" class="px-4 py-2 bg-amber-950/30 border-t border-amber-900/40 flex justify-between items-center hidden">
                 <span class="text-xs text-amber-300 flex items-center gap-1.5">
                     <span>💡</span> Bruno arhitektūra gatava.
@@ -305,7 +297,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <span class="text-[10px] text-slate-500 ml-auto">Shift+Enter jauna rinda • Enter sūtīt</span>
                 </div>
                 <div class="flex gap-2 items-end">
-                    <textarea id="chatInput" rows="2" placeholder="Ieraksti domu vai uzdevumu Bruno..." class="flex-1 bg-slate-950 border border-borderCol rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500 resize-none" onkeydown="handleChatKey(event)"></textarea>
+                    <textarea id="chatInput" rows="2" placeholder="Ieraksti domu vai lēmumu Bruno..." class="flex-1 bg-slate-950 border border-borderCol rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500 resize-none" onkeydown="handleChatKey(event)"></textarea>
                     <button id="sendBtn" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition h-[42px]">Sūtīt</button>
                 </div>
             </div>
@@ -317,8 +309,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 <span class="font-semibold text-xs uppercase tracking-wider text-slate-400">2. Intent / Uzdevumi</span>
                 <span class="text-slate-500 text-sm">🎯</span>
             </div>
-            <div class="p-3 border-b border-borderCol bg-slate-900/20">
-                <input type="text" id="newTaskTitle" placeholder="+ Jauns uzdevums..." class="w-full bg-slate-950 border border-borderCol rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" onkeydown="if(event.key==='Enter') createTask()">
+            <div class="p-3 border-b border-borderCol bg-slate-900/20 space-y-2">
+                <input type="text" id="newTaskTitle" placeholder="+ Jauns mērķis vai uzdevums..." class="w-full bg-slate-950 border border-borderCol rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" onkeydown="if(event.key==='Enter') createTask()">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+                        <span>Kam:</span>
+                        <select id="taskAssignee" class="bg-slate-950 text-slate-200 border border-borderCol rounded px-1.5 py-0.5 outline-none">
+                            <option value="Bruno">Bruno (Arhitekts)</option>
+                            <option value="Leo">Leo (Inženieris)</option>
+                            <option value="Viesturs">Viesturs</option>
+                        </select>
+                    </div>
+                    <button onclick="createTask()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] px-2.5 py-0.5 rounded font-medium transition">Pievienot</button>
+                </div>
             </div>
             <div id="taskList" class="flex-1 p-3 overflow-y-auto space-y-2"></div>
         </section>
@@ -326,7 +329,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <!-- 3. Artifacts / Docs -->
         <section class="col-span-4 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
             <div class="px-4 py-2.5 border-b border-borderCol bg-slate-900/50 flex justify-between items-center">
-                <!-- Cilnes: Dokumentācija vs Kods -->
                 <div class="flex space-x-1 bg-slate-950 p-1 rounded-lg border border-borderCol text-xs">
                     <button id="tabDocBtn" onclick="switchTab('doc')" class="px-2.5 py-1 rounded bg-blue-600 text-white font-medium transition flex items-center gap-1">
                         <span>📄</span> Specs
@@ -335,7 +337,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                         <span>💻</span> server.py
                     </button>
                 </div>
-                <button onclick="copyCurrentArtifact()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-borderCol transition">Kopēt 📋</button>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="downloadArtifact()" class="text-xs bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 border border-emerald-700 px-2 py-1 rounded transition flex items-center gap-1">
+                        <span>📥</span> Lejupielādēt
+                    </button>
+                    <button onclick="copyCurrentArtifact()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-borderCol transition">Kopēt 📋</button>
+                </div>
             </div>
             <div class="flex-1 p-3 overflow-hidden flex flex-col">
                 <div class="text-xs mb-2 font-mono flex justify-between items-center">
@@ -437,6 +444,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             if (window.hljs) hljs.highlightElement(el);
         }
 
+        function downloadArtifact() {
+            if (!allArtifacts.length) return;
+            const target = allArtifacts.find(a => a.id === activeTab) || allArtifacts[0];
+            const blob = new Blob([target.code], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = target.title;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
         function renderChat(messages, forceScroll = false) {
             const box = document.getElementById('chatMessages');
             const isScrolledToBottom = (box.scrollHeight - box.clientHeight) <= (box.scrollTop + 60);
@@ -464,12 +482,54 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         function renderTasks(tasks) {
             const box = document.getElementById('taskList');
+            if (!tasks || !tasks.length) {
+                box.innerHTML = '<div class="text-xs text-slate-500 italic p-2 text-center">Nav aktīvu uzdevumu.</div>';
+                return;
+            }
+
+            const statusBadges = {
+                'Todo': 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700',
+                'In Progress': 'bg-amber-950 text-amber-300 border-amber-800 hover:bg-amber-900',
+                'Done': 'bg-emerald-950 text-emerald-300 border-emerald-800 hover:bg-emerald-900'
+            };
+
             box.innerHTML = tasks.map(t => `
-                <div class="p-2 rounded bg-slate-900/70 border border-slate-800 flex justify-between items-center text-xs">
-                    <span class="text-slate-200">${t.title}</span>
-                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-950 text-blue-400 border border-blue-800">${t.status}</span>
+                <div class="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs flex flex-col gap-1.5 shadow-sm">
+                    <div class="flex justify-between items-start gap-2">
+                        <span class="text-slate-200 font-medium leading-snug flex-1">${t.title}</span>
+                        <button onclick="deleteTask(${t.id})" class="text-slate-600 hover:text-rose-400 transition text-[11px] p-0.5" title="Dzēst uzdevumu">✕</button>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] pt-1 border-t border-slate-800/60">
+                        <span class="text-slate-400 flex items-center gap-1">
+                            <span>👤</span> ${t.assignee || 'Komanda'}
+                        </span>
+                        <button onclick="cycleTaskStatus(${t.id}, '${t.status}')" class="px-2 py-0.5 rounded-full border text-[10px] font-semibold transition ${statusBadges[t.status] || statusBadges['Todo']}">
+                            ${t.status} ↻
+                        </button>
+                    </div>
                 </div>
             `).join('');
+        }
+
+        async function cycleTaskStatus(taskId, currentStatus) {
+            const flow = { 'Todo': 'In Progress', 'In Progress': 'Done', 'Done': 'Todo' };
+            const nextStatus = flow[currentStatus] || 'Todo';
+            await fetch('/api/task/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
+                body: JSON.stringify({ id: taskId, status: nextStatus })
+            });
+            fetchState();
+        }
+
+        async function deleteTask(taskId) {
+            if (!confirm("Vai tiešām vēlies dzēst šo uzdevumu?")) return;
+            await fetch('/api/task/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
+                body: JSON.stringify({ id: taskId })
+            });
+            fetchState();
         }
 
         function handleChatKey(e) {
@@ -564,6 +624,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const input = document.getElementById('newTaskTitle');
             const title = input.value.trim();
             if (!title) return;
+            const assignee = document.getElementById('taskAssignee').value;
             input.value = '';
             await fetch('/api/task', {
                 method: 'POST',
@@ -571,7 +632,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     'Content-Type': 'application/json',
                     'X-AQ-PIN': currentPin
                 },
-                body: JSON.stringify({ title: title })
+                body: JSON.stringify({ title: title, assignee: assignee })
             });
             fetchState();
         }
@@ -674,7 +735,7 @@ def add_message():
         })
         save_state_local(state)
     except Exception as e:
-        print(f"Kļūda pie Bruno atbildes: {e}")
+        print(f"Kļūda pie Bruno: {e}")
         
     return jsonify({"status": "ok"})
 
@@ -696,7 +757,7 @@ def colleague_turn():
         })
         save_state_local(state)
     except Exception as e:
-        print(f"Kļūda pie Leo atbildes: {e}")
+        print(f"Kļūda pie Leo: {e}")
 
     return jsonify({"status": "ok"})
 
@@ -706,11 +767,39 @@ def add_task():
         return jsonify({"error": "Unauthorized"}), 401
     state = load_state()
     data = request.json
+    new_id = max([t["id"] for t in state["tasks"]], default=0) + 1
     state["tasks"].append({
-        "id": len(state["tasks"]) + 1,
+        "id": new_id,
         "title": data.get("title", ""),
-        "status": "In Progress"
+        "status": "Todo",
+        "assignee": data.get("assignee", "Komanda")
     })
+    save_state_local(state)
+    return jsonify({"status": "ok"})
+
+@app.route('/api/task/status', methods=['POST'])
+def update_task_status():
+    if not verify_auth():
+        return jsonify({"error": "Unauthorized"}), 401
+    state = load_state()
+    data = request.json
+    task_id = data.get("id")
+    new_status = data.get("status")
+    for t in state["tasks"]:
+        if t["id"] == task_id:
+            t["status"] = new_status
+            break
+    save_state_local(state)
+    return jsonify({"status": "ok"})
+
+@app.route('/api/task/delete', methods=['POST'])
+def delete_task():
+    if not verify_auth():
+        return jsonify({"error": "Unauthorized"}), 401
+    state = load_state()
+    data = request.json
+    task_id = data.get("id")
+    state["tasks"] = [t for t in state["tasks"] if t["id"] != task_id]
     save_state_local(state)
     return jsonify({"status": "ok"})
 
