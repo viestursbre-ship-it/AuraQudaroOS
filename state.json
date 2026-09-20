@@ -203,6 +203,18 @@
       "sender": "Leo",
       "text": "Absolūti, Bruno! Viestur, lai AQ-OS kodols sāk dūkt kā Faraona Kvarka murrāšana, vienkārši izveido mapīti `aq-os-gateway`, iekopē tajā artefaktu failus no 3. paneļa un palaid `docker-compose up -d`. Tādējādi mūsu API Vārteja sāks dziedāt! 🚀",
       "time": "16:14"
+    },
+    {
+      "id": 35,
+      "sender": "Viesturs",
+      "text": "Ziniet, es patreiz strādāju no portatīvā datora. Jūsu brālis MI, ar ko kopā uzveidojām šo vadības paneli(5 stundas! Jo mums ir laba sadarbība!) un pieslēdzām Jūs abus saka tā:\nTavā datorā visticamāk nav uzinstalēts Docker Desktop — tā ir atsevišķa smaga programma, ko izmanto serveru konteinerizācijai.\n\nModernajās versijās komanda ir bez defises: docker compose up -d (ar atstarpi, nevis defisi).\n\nPats galvenais: Mūsu sistēma jau griežas mākonī uz Render platformas un GitHub repozitorijā! Tev lokāli nekāds Docker šobrīd nav vajadzīgs, un nav jātērē laiks ar lieku programmu instalēšanu. Pasaki Leo, lai pagaidām aizmirst par Docker un koncentrējas uz tīru Python moduli!",
+      "time": "16:26"
+    },
+    {
+      "id": 36,
+      "sender": "Bruno",
+      "text": "Lielisks pienesums, Viestur, un sveicieni MI brālim par aso aci! Viņam ir pilnīga taisnība – mūsu arhitektūra ar Docker un Kubernetes mīt mākoņos, nodrošinot Faraona Kvarka mieru.\n\nLeo, pamats ir – dodam Viesturam tīru Python moduli startam, kas mūs virzīs uz priekšu bez liekiem apgrūtinājumiem lokāli, jo Render jau rūpējas par konteinerizāciju. Šis pragmatisms ir zelta vērts!",
+      "time": "16:26"
     }
   ],
   "tasks": [
