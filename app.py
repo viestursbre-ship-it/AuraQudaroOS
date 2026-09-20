@@ -207,17 +207,27 @@ def save_state_local(state):
     json.dump(state, f, ensure_ascii=False, indent=2)
 
 
+sync_timer = None
+
+
 def trigger_background_sync():
-  """Palaiž asinhronu GitHub saglabāšanu pēc 2 sekundēm fonā."""
+  """Atliktā sinhronizācija (Debounce): nogaida 10 sekundes pēc pēdējā ieraksta pirms sūta uz GitHub."""
+  global sync_timer
   if not GITHUB_TOKEN:
     return
 
-  def _task():
-    time.sleep(2)
-    st = load_state()
-    sync_to_github(st)
+  if sync_timer and sync_timer.is_alive():
+    sync_timer.cancel()
 
-  threading.Thread(target=_task, daemon=True).start()
+  def _task():
+    try:
+      st = load_state()
+      sync_to_github(st)
+    except Exception as e:
+      print(f"[SYNC Kļūda]: {e}")
+
+  sync_timer = threading.Timer(10.0, _task)
+  sync_timer.start()
 
 
 def ask_colleague(colleague_name, recent_history):
@@ -629,21 +639,25 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             }
         }
 
-        async function callLeo() {
+  async function callLeo() {
             const btn = document.getElementById('leoCallBtn');
             btn.disabled = true;
             showIndicator("Leo analizē Bruno arhitektūru un gatavo atbildi...");
 
             try {
-                await fetch('/api/colleague_turn', {
+                const res = await fetch('/api/colleague_turn', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
                     body: JSON.stringify({ colleague: 'Leo' })
                 });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    document.getElementById('leoTriggerBar').classList.add('hidden');
+                }
                 await fetchState(true);
-                document.getElementById('leoTriggerBar').classList.add('hidden');
             } catch (err) {
                 console.error("Kļūda:", err);
+                alert("Savienojuma kļūda ar Leo. Mēģini vēlreiz!");
             } finally {
                 removeIndicator();
                 btn.disabled = false;
