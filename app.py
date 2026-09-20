@@ -162,11 +162,22 @@ def process_artifact_update(state, text):
     return clean_text
 
 def ask_colleague(colleague_name, recent_history):
-    if not client: return f"[{colleague_name} bez API atslēgas]"
+    if not client:
+        return f"[{colleague_name} bez API atslēgas]"
     sys_instruction = BRUNO_PROMPT if colleague_name == "Bruno" else LEO_PROMPT
     context_thread = "Saruna:\n"
     for m in recent_history[-8:]:
         context_thread += f"[{m['time']}] {m['sender']}: {m['text']}\n"
+
+    try:
+        st = load_state()
+        for art in st.get("artifacts", []):
+            if art.get("id") == "doc" and art.get("code"):
+                context_thread += f"\n--- 3. PANEĻA SPECIFIKĀCIJA ---\n{art['code']}\n-------------------------------\n"
+                break
+    except Exception:
+        pass
+
     context_thread += f"\nAtbildi kā {colleague_name}."
     try:
         response = client.models.generate_content(
