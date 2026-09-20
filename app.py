@@ -260,6 +260,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                         <option value="Bruno">🏛️ Bruno</option>
                         <option value="Leo">⚡ Leo</option>
                     </select>
+                    <input type="file" id="fileAttachment" class="hidden" accept="image/*,.txt,.json,.py,.md" onchange="handleFileSelect(this)">
+                    <button type="button" onclick="document.getElementById('fileAttachment').click()" class="ml-2 text-slate-400 hover:text-amber-400 text-base" title="Pievienot failu vai attēlu">📎</button>
+                    <span id="fileNameBadge" class="hidden text-xs text-amber-300 bg-slate-800 px-2 py-0.5 rounded flex items-center gap-1"></span>>
                 </div>
                 <div class="flex gap-2">
                     <textarea id="chatInput" rows="2" placeholder="Ieraksti domu Bruno..." class="flex-1 bg-slate-950 border border-borderCol rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500 resize-none" onkeydown="handleChatKey(event)"></textarea>
@@ -442,21 +445,52 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             fetchState();
         }
 
+        let attachedFile = null;
+
+        function handleFileSelect(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                attachedFile = {
+                    name: file.name,
+                    type: file.type,
+                    data: e.target.result
+                };
+                const badge = document.getElementById('fileNameBadge');
+                badge.innerHTML = `📎 ${file.name} <button onclick="clearAttachment(event)" class="text-rose-400 font-bold ml-1">×</button>`;
+                badge.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearAttachment(e) {
+            if (e) e.stopPropagation();
+            attachedFile = null;
+            const fileInput = document.getElementById('fileAttachment');
+            if (fileInput) fileInput.value = '';
+            const badge = document.getElementById('fileNameBadge');
+            if (badge) badge.classList.add('hidden');
+        }
+
         function handleChatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }
 
         async function sendChatMessage() {
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
-            if (!text) return;
+            if (!text && !attachedFile) return;
             const author = document.getElementById('authorSelect').value;
             const respondent = document.getElementById('respondentSelect').value;
-            input.value = '';
-            document.getElementById('leoTriggerBar').classList.add('hidden');
+            const fileToSend = attachedFile;
             
+            input.value = '';
+            clearAttachment();
+            document.getElementById('leoTriggerBar').classList.add('hidden');
+
             await fetch('/api/message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
-                body: JSON.stringify({ sender: author, text: text, respondent: respondent })
+                body: JSON.stringify({ sender: author, text: text, respondent: respondent, attachment: fileToSend })
             });
             await fetchState(true);
             
