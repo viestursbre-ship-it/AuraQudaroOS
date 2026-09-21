@@ -389,19 +389,30 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         function renderChat(messages, forceScroll = false) {
-            const box = document.getElementById('chatMessages');
-            const colors = { 'Viesturs': 'text-blue-400', 'Marija': 'text-pink-400', 'Bruno': 'text-amber-400', 'Leo': 'text-emerald-400' };
-            box.innerHTML = messages.map(m => `
-                <div class="p-2.5 rounded-lg text-xs bg-slate-900/70 border border-slate-800">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold ${colors[m.sender] || 'text-slate-300'}">${m.sender}</span>
-                        <span class="text-[10px] text-slate-500">${m.time}</span>
-                    </div>
-                    <div class="text-slate-200 whitespace-pre-wrap">${m.text}</div>
-                </div>
-            `).join('');
-            if (forceScroll) box.scrollTop = box.scrollHeight;
+    const box = document.getElementById('chatMessages');
+    const colors = { 'Viesturs': 'text-blue-400', 'Marija': 'text-pink-400', 'Bruno': 'text-amber-400', 'Leo': 'text-emerald-400' };
+    box.innerHTML = messages.map(m => {
+        let attachHtml = '';
+        if (m.attachment) {
+            if (m.attachment.type && m.attachment.type.startsWith('image/')) {
+                attachHtml = `<div class="mt-2"><img src="${m.attachment.data}" class="max-h-56 rounded border border-slate-700 shadow-md" alt="${m.attachment.name}"></div>`;
+            } else {
+                attachHtml = `<div class="mt-2 text-xs text-amber-300 bg-slate-950 border border-slate-800 rounded px-2 py-1 inline-flex items-center gap-1">📄 ${m.attachment.name}</div>`;
+            }
         }
+        return `
+        <div class="p-2.5 rounded-lg text-xs bg-slate-900/70 border border-slate-800">
+            <div class="flex justify-between items-center mb-1">
+                <span class="font-bold ${colors[m.sender] || 'text-slate-300'}">${m.sender}</span>
+                <span class="text-[10px] text-slate-500">${m.time}</span>
+            </div>
+            <div class="text-slate-200 whitespace-pre-wrap">${m.text}</div>
+            ${attachHtml}
+        </div>
+        `;
+    }).join('');
+    if (forceScroll) box.scrollTop = box.scrollHeight;
+}
 
         function renderTasks(tasks) {
             const box = document.getElementById('taskList');
@@ -458,8 +469,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     data: e.target.result
                 };
                 const badge = document.getElementById('fileNameBadge');
-                badge.innerHTML = `📎 ${file.name} <button onclick="clearAttachment(event)" class="text-rose-400 font-bold ml-1">×</button>`;
+                // Ieliekam skaidru tekstu un krustiņu
+                badge.innerHTML = `<span class="truncate max-w-[150px]">📎 ${file.name}</span><button type="button" onclick="clearAttachment(event)" class="text-rose-400 hover:text-rose-300 font-bold ml-2 text-sm">✕</button>`;
                 badge.classList.remove('hidden');
+                badge.classList.add('inline-flex');
             };
             reader.readAsDataURL(file);
         }
@@ -572,9 +585,15 @@ def manual_sync():
 def add_message():
     if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
     state = load_state()
-    data = request.json
+    data = request.json or {}
     now = datetime.now().strftime("%H:%M")
-    state["messages"].append({"id": len(state["messages"]) + 1, "sender": data.get("sender", "Viesturs"), "text": data.get("text", ""), "time": now})
+    state["messages"].append({
+        "id": len(state["messages"]) + 1,
+        "sender": data.get("sender", "Viesturs"),
+        "text": data.get("text", ""),
+        "attachment": data.get("attachment"),
+        "time": now
+    })
     save_state_local(state)
 
     try:
