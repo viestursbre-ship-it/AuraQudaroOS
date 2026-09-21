@@ -147,37 +147,27 @@ def process_artifact_update(state, text, author="Bruno"):
     if not text:
         return text
 
-    new_code = None
-
-    # 1. Mēģinām atrast pilnu kodu starp ``` un ```
+    print("--- PĀRBAUDĀM BRUNO TEKSTU ARTEFAKTIEM ---")
     match = re.search(r"```(?:markdown|python|javascript|html)?\s*\n([\s\S]*?)```", text)
+    if not match:
+        match = re.search(r"```(?:markdown|python|javascript|html)?\s*\n([\s\S]+)", text)
+
     if match:
         new_code = match.group(1).strip()
-    else:
-        # 2. Ja noslēdzošās ``` beigās aizmirstas, paņemam visu no pirmā ``` uz leju
-        match_open = re.search(r"```(?:markdown|python|javascript|html)?\s*\n([\s\S]+)", text)
-        if match_open:
-            new_code = match_open.group(1).strip()
-
-    # Ja atrastais kods ir pietiekami garš un nav tukšs joks
-    if new_code and len(new_code) > 40:
+        print(f"ATRASTS KODS! Garums: {len(new_code)}")
+        found_art = False
         for art in state.get("artifacts", []):
+            print(f"Pārbaudām artefaktu ar id: {art.get('id')}")
             if art.get("id") == "doc":
-                if "history" not in art:
-                    art["history"] = []
-                
-                # Saglabājam veco versiju vēsturē, ja tā atšķiras
-                if art.get("code") and art["code"].strip() != new_code:
-                    art["history"].append({
-                        "time": datetime.now().strftime("%d.%m %H:%M"),
-                        "author": author,
-                        "code": art["code"]
-                    })
-                    art["history"] = art["history"][-15:]
-
+                found_art = True
                 art["code"] = new_code
                 save_state_local(state)
+                print(">>> VEIKSMĪGI SAGLABĀTS 3. PANELĪ! <<<")
                 break
+        if not found_art:
+            print("BRĪDINĀJUMS: Artefakts ar id 'doc' netika atrasts state sarakstā!")
+    else:
+        print("KODS NETIKA ATRASTS AR REGEX!")
 
     return text
 
