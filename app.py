@@ -672,7 +672,10 @@ def add_message():
     if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
     state = load_state()
     data = request.json or {}
+    respondent = data.get("respondent", "Bruno")
     now = datetime.now().strftime("%H:%M")
+    
+    # 1. Uzreiz saglabājam lietotāja ziņu, lai tā nekad nepazustu!
     state["messages"].append({
         "id": len(state["messages"]) + 1,
         "sender": data.get("sender", "Viesturs"),
@@ -682,13 +685,26 @@ def add_message():
     })
     save_state_local(state)
 
+    # 2. Prasām atbildi kolēģim
     try:
-        reply = ask_colleague(data.get("respondent", "Bruno"), state["messages"])
-        clean_reply = process_artifact_update(state, reply)
-        state["messages"].append({"id": len(state["messages"]) + 1, "sender": data.get("respondent", "Bruno"), "text": clean_reply, "time": datetime.now().strftime("%H:%M")})
+        reply = ask_colleague(respondent, state["messages"])
+        clean_reply = process_artifact_update(state, reply, author=respondent)
+        state["messages"].append({
+            "id": len(state["messages"]) + 1,
+            "sender": respondent,
+            "text": clean_reply,
+            "time": datetime.now().strftime("%H:%M")
+        })
         save_state_local(state)
     except Exception as e:
-        print(f"Kļūda Bruno: {e}")
+        print(f"Kļūda atbildot {respondent}: {e}")
+        state["messages"].append({
+            "id": len(state["messages"]) + 1,
+            "sender": respondent,
+            "text": f"Mamma mia, kaut kas nogāja greizi ar dzinēju: {e}",
+            "time": datetime.now().strftime("%H:%M")
+        })
+        save_state_local(state)
 
     trigger_background_sync()
     return jsonify({"status": "ok"})
