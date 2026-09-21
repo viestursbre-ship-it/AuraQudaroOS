@@ -144,35 +144,41 @@ def trigger_background_sync():
 
 def process_artifact_update(state, text, author="Bruno"):
     import re
-    # Meklējam koda vai markdown blokus
-    match = re.search(r"```(markdown|python|javascript|html)?\s*\n([\s\S]*?)```", text)
-    if not match:
+    if not text:
         return text
 
-    new_code = match.group(2).strip()
-    # Ja teksts ir par īsu vai tukšs joks, nepārrakstām specifikāciju!
-    if len(new_code) < 30:
-        return text
+    new_code = None
 
-    for art in state.get("artifacts", []):
-        if art.get("id") == "doc":
-            # Inicializējam vēsturi, ja vēl nav
-            if "history" not in art:
-                art["history"] = []
-            
-            # Ja kods tiešām ir mainījies, saglabājam veco versiju vēsturē
-            if art.get("code") and art["code"] != new_code:
-                art["history"].append({
-                    "time": datetime.now().strftime("%d.%m %H:%M"),
-                    "author": author,
-                    "code": art["code"]
-                })
-                # Paturam pēdējās 15 versijas, lai neaizaudzētu atmiņu
-                art["history"] = art["history"][-15:]
+    # 1. Mēģinām atrast pilnu kodu starp ``` un ```
+    match = re.search(r"```(?:markdown|python|javascript|html)?\s*\n([\s\S]*?)```", text)
+    if match:
+        new_code = match.group(1).strip()
+    else:
+        # 2. Ja noslēdzošās ``` beigās aizmirstas, paņemam visu no pirmā ``` uz leju
+        match_open = re.search(r"```(?:markdown|python|javascript|html)?\s*\n([\s\S]+)", text)
+        if match_open:
+            new_code = match_open.group(1).strip()
 
-            art["code"] = new_code
-            break
-            
+    # Ja atrastais kods ir pietiekami garš un nav tukšs joks
+    if new_code and len(new_code) > 40:
+        for art in state.get("artifacts", []):
+            if art.get("id") == "doc":
+                if "history" not in art:
+                    art["history"] = []
+                
+                # Saglabājam veco versiju vēsturē, ja tā atšķiras
+                if art.get("code") and art["code"].strip() != new_code:
+                    art["history"].append({
+                        "time": datetime.now().strftime("%d.%m %H:%M"),
+                        "author": author,
+                        "code": art["code"]
+                    })
+                    art["history"] = art["history"][-15:]
+
+                art["code"] = new_code
+                save_state_local(state)
+                break
+
     return text
 
 def ask_colleague(colleague_name, recent_history):
