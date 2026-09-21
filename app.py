@@ -147,21 +147,27 @@ def process_artifact_update(state, text, author="Bruno"):
     if not text or not state.get("artifacts"):
         return text
 
-    # Meklējam Markdown koda bloku
-    pattern = r"```(?:markdown|[a-z]+)?\s*([\s\S]*?)```"
+    # Meklējam kodu un noskaidrojam valodu
+    pattern = r"```(?:(markdown|python|javascript|html|[a-z]+))?\s*([\s\S]*?)```"
     match = re.search(pattern, text, re.IGNORECASE)
     
     new_code = None
+    lang = "markdown"
     if match:
-        new_code = match.group(1).strip()
+        lang = (match.group(1) or "markdown").lower()
+        new_code = match.group(2).strip()
     else:
-        pattern_open = r"```(?:markdown|[a-z]+)?\s*([\s\S]+)"
+        pattern_open = r"```(?:(markdown|python|javascript|html|[a-z]+))?\s*([\s\S]+)"
         match_open = re.search(pattern_open, text, re.IGNORECASE)
         if match_open:
-            new_code = match_open.group(1).strip()
+            lang = (match_open.group(1) or "markdown").lower()
+            new_code = match_open.group(2).strip()
 
-    if new_code and len(new_code) > 50:
-        target_art = state["artifacts"][0]
+    if new_code and len(new_code) > 40:
+        # Ja autors ir Leo vai kods ir Python -> mērķis ir 2. artefakts (code)
+        # Ja autors ir Bruno vai kods ir Markdown -> mērķis ir 1. artefakts (doc)
+        target_idx = 1 if (author == "Leo" or lang == "python") and len(state["artifacts"]) > 1 else 0
+        target_art = state["artifacts"][target_idx]
         
         if "history" not in target_art:
             target_art["history"] = []
@@ -177,8 +183,9 @@ def process_artifact_update(state, text, author="Bruno"):
         target_art["code"] = new_code
         save_state_local(state)
         
-        # Aizstājam milzīgo bloku ar īsu, elegantu paziņojumu čatā
-        text = re.sub(r"```[\s\S]*?(?:```|$)", "\n*(📄 Specifikācija ir atjaunināta 3. panelī)*\n", text).strip()
+        # Čatā atstājam tikai pieklājīgu norādi
+        target_name = "server.py" if target_idx == 1 else "specifikācijā"
+        text = re.sub(r"```[\s\S]*?(?:```|$)", f"\n*(⚡ Kods atjaunināts 3. panelī zem {target_name})*\n", text).strip()
 
     return text
 
@@ -716,7 +723,7 @@ def colleague_turn():
     state = load_state()
     try:
         reply = ask_colleague(request.json.get("colleague", "Leo"), state["messages"])
-        clean_reply = process_artifact_update(state, reply)
+        clean_reply = process_artifact_update(state, reply, author="Leo") # <-- šeit ieliekam author="Leo"
         state["messages"].append({"id": len(state["messages"]) + 1, "sender": request.json.get("colleague", "Leo"), "text": clean_reply, "time": datetime.now().strftime("%H:%M")})
         save_state_local(state)
     except Exception as e:
