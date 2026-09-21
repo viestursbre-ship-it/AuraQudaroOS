@@ -180,16 +180,38 @@ def ask_colleague(colleague_name, recent_history):
         st = load_state()
         for art in st.get("artifacts", []):
             if art.get("id") == "doc" and art.get("code"):
-                context_thread += f"\n--- 3. PANEĻA SPECIFIKĀCIJA ---\n{art['code']}\n-------------------------------\n"
+                context_thread += f"\n--- 3. PANEĻA SPECIFIKĀCIJA ---\n{art['code']}\n-----------------------------\n"
                 break
     except Exception:
         pass
 
     context_thread += f"\nAtbildi kā {colleague_name}."
+
+    # Sagatavojam saturu Gemini modelim (teksts + bilde/fails, ja pievienots)
+    contents_payload = [context_thread]
+    
+    if recent_history:
+        last_msg = recent_history[-1]
+        att = last_msg.get("attachment")
+        if att and isinstance(att, dict) and att.get("data"):
+            try:
+                from google.genai import types
+                raw_data = att["data"]
+                # Atdalām 'data:image/jpeg;base64,...' galviņu no tīrajiem datiem
+                if "," in raw_data:
+                    raw_data = raw_data.split(",", 1)[1]
+                file_bytes = base64.b64decode(raw_data)
+                mime_type = att.get("type", "image/jpeg")
+                
+                # Iedodam Gemini acis!
+                contents_payload.append(types.Part.from_bytes(data=file_bytes, mime_type=mime_type))
+            except Exception as err:
+                print(f"Pielikuma dekodēšanas kļūda: {err}")
+
     try:
         response = client.models.generate_content(
             model='gemini-2.5-flash',
-            contents=context_thread,
+            contents=contents_payload,
             config={'system_instruction': sys_instruction}
         )
         return response.text
