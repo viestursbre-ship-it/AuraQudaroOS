@@ -147,15 +147,16 @@ def process_artifact_update(state, text, author="Bruno"):
     if not text or not state.get("artifacts"):
         return text
 
-    # 1. Ļoti elastīgs meklētājs: atrod jebko starp ``` (ar vai bez vārda markdown) un noslēdzošo ```
-    match = re.search(r"```(?:markdown|[a-z]+)?\s*([\s\S]*?)```", text, re.IGNORECASE)
+    # Meklējam Markdown koda bloku
+    pattern = r"```(?:markdown|[a-z]+)?\s*([\s\S]*?)```"
+    match = re.search(pattern, text, re.IGNORECASE)
     
     new_code = None
     if match:
         new_code = match.group(1).strip()
     else:
-        # Ja beigu ``` pietrūkst, paņemam visu aiz pirmā ```
-        match_open = re.search(r"```(?:markdown|[a-z]+)?\s*([\s\S]+)", text, re.IGNORECASE)
+        pattern_open = r"```(?:markdown|[a-z]+)?\s*([\s\S]+)"
+        match_open = re.search(pattern_open, text, re.IGNORECASE)
         if match_open:
             new_code = match_open.group(1).strip()
 
@@ -175,6 +176,9 @@ def process_artifact_update(state, text, author="Bruno"):
             
         target_art["code"] = new_code
         save_state_local(state)
+        
+        # Aizstājam milzīgo bloku ar īsu, elegantu paziņojumu čatā
+        text = re.sub(r"```[\s\S]*?(?:```|$)", "\n*(📄 Specifikācija ir atjaunināta 3. panelī)*\n", text).strip()
 
     return text
 
@@ -330,14 +334,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <button onclick="copyCurrentArtifact()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-borderCol">📋 Kopēt</button>
                 </div>
             </div>
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
-    <div class="flex items-center gap-2">
-        <span id="artifactTitle" class="text-xs font-bold text-emerald-400">AQ_SYSTEM_SPEC.md</span>
-        <select id="versionSelect" onchange="rollbackVersion(this.value)" class="hidden bg-slate-950 text-slate-400 border border-slate-800 text-[10px] rounded px-1.5 py-0.5 outline-none">
-            <option value="">🕒 Vēsture...</option>
-        </select>
-    </div>
-</div>
+            <div class="flex items-center justify-between border-b border-slate-800 px-4 py-2 bg-slate-900/30">
+                <div class="flex items-center gap-2">
+                    <span id="artifactTitle" class="text-xs font-bold text-emerald-400">AQ_SYSTEM_SPEC.md</span>
+                    <select id="versionSelect" onchange="rollbackVersion(this.value)" class="hidden bg-slate-950 text-slate-400 border border-slate-800 text-[10px] rounded px-1.5 py-0.5 outline-none">
+                        <option value="">🕒 Vēsture...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex-1 p-3 overflow-auto bg-slate-950/60 font-mono text-xs">
+                <pre class="m-0"><code id="artifactCode" class="language-markdown"></code></pre>
+            </div>
         </section>
     </main>
 
