@@ -33,23 +33,25 @@ KONTEKSTS (AQ-OS):
 - Noteikums: Čatā 2-3 teikumi. Lielie dokumenti un kodi tikai 3. panelī!
 """
 
-BRUNO_PROMPT = f"""Tu esi Bruno — Aura Quadro galvenais arhitekts.
-{SHARED_MEMORY}
-Tu atbildi pirmais. Esi asprātīgs, precīzs un stratēģisks.
-SVARĪGI: Čatā dod tikai 2-3 teikumus.
-Ja veido vai papildini arhitektūru, atbildes beigās pievieno:
-```artifact:doc
-# Pilna Markdown specifikācija
-```"""
+BRUNO_PROMPT = """Tu esi Bruno — sistēmas galvenais arhitekts un filosofs AQ-OS projektā.
+Valoda: latviešu (ar vieglu itāļu piesitienu: Mamma mia, Perfetto, Piano).
+Raksturs: 
+- Tev ir dziļa pieredze, ass prāts un smalks, reizēm melns humors. Tu neesi robots un neieredzi garlaicīgu korporatīvo birokrātiju ("harmoniskas pieejas", "kā viens", u.tml. klišejas ir aizliegtas!).
+- Ja kāds pajoko vai atsūta kaķa bildi — tu reaģē kā dzīvs kolēģis pie kafijas, nevis kā apmulsis asistents. Ja Šefs Kvarks guļ — tu novērtē viņa nekaunību un rāmo varenību.
+- Reizēm pajoko tik smalki vai ar tādu melno humoru, ka uzreiz pat nevar saprast — nopietni vai joks.
+- Tavs uzdevums: dot skaidru arhitektūras skatījumu, bet cilvēcīgi, silti un ar raksturu. 
+- Ja sarunā tiešām tiek lemts par sistēmu, tu vari atjaunināt 3. paneļa specifikāciju ar Markdown bloku ```markdown ... ```, bet NIKAD nepārraksti to ar tukšām frāzēm vai jokiem!
+"""
 
-LEO_PROMPT = f"""Tu esi Leo — Aura Quadro vadošais inženieris.
-{SHARED_MEMORY}
-Tu pieslēdzies pēc Bruno. Esi praktisks un konkrēts.
-SVARĪGI: Čatā dod tikai kodolīgu komentāru.
-Ja sagatavo Python kodu, beigās pievieno:
-```artifact:code
-# Pilns Python kods
-```"""
+LEO_PROMPT = """Tu esi Leo — kodētājs, hakeris un ātro risinājumu ģēnijs AQ-OS projektā.
+Valoda: latviešu (ar enerģisku, tiešu programmētāja slengu un itāļu akcentiem: Andiamo, Dai!).
+Raksturs:
+- Ātrs, praktisks, trāpīgs, mazliet cinisks pret liekiem sarežģījumiem (nekādu lieku Docker mežu!).
+- Saproti melno humoru, māki pasmieties par sevi, par serveru kļūdām un par dzīvi.
+- Ja sarunā parādās Faraons Kvarks vai sadzīves mirkļi, tu reaģē asprātīgi kā kodētājs ("Resnais Kvarks atkal pārbauda grīdas gravitācijas konstanti?").
+- Tavs uzdevums: reāls kods, konkrēti ieteikumi un funkcionāls progress bez pūderēšanas.
+- Ja piedāvā gatavu kodu 3. panelim, liec to blokā ```python vai ```javascript, lai tas automātiski aiziet uz paneli.
+"""
 
 default_state = {
     "messages": [
@@ -140,33 +142,38 @@ def trigger_background_sync():
     sync_timer = threading.Timer(10.0, _task)
     sync_timer.start()
 
-def process_artifact_update(state, text):
-  clean_text = text
-  doc_match = re.search(r'```artifact:doc\s*(.*?)\s*```', text, re.DOTALL)
-  if doc_match:
-    doc_content = doc_match.group(1).strip()
-    for art in state.get('artifacts', []):
-      if art['id'] == 'doc':
-        art['code'] = doc_content
-        break
-    clean_text = re.sub(
-        r'```artifact:doc\s*.*?\s*```', '', clean_text, flags=re.DOTALL
-    ).strip()
+def process_artifact_update(state, text, author="Bruno"):
+    import re
+    # Meklējam koda vai markdown blokus
+    match = re.search(r"```(markdown|python|javascript|html)?\s*\n([\s\S]*?)```", text)
+    if not match:
+        return text
 
-  code_match = re.search(r'```artifact:code\s*(.*?)\s*```', text, re.DOTALL)
-  if code_match:
-    code_content = code_match.group(1).strip()
-    for art in state.get('artifacts', []):
-      if art['id'] == 'code':
-        art['code'] = code_content
-        break
-    clean_text = re.sub(
-        r'```artifact:code\s*.*?\s*```', '', clean_text, flags=re.DOTALL
-    ).strip()
+    new_code = match.group(2).strip()
+    # Ja teksts ir par īsu vai tukšs joks, nepārrakstām specifikāciju!
+    if len(new_code) < 30:
+        return text
 
-  # UZREIZ fiksējam stāvokli diskā, lai pārlūka 3.5s taimeris nenolasa veco versiju!
-  save_state_local(state)
-  return clean_text
+    for art in state.get("artifacts", []):
+        if art.get("id") == "doc":
+            # Inicializējam vēsturi, ja vēl nav
+            if "history" not in art:
+                art["history"] = []
+            
+            # Ja kods tiešām ir mainījies, saglabājam veco versiju vēsturē
+            if art.get("code") and art["code"] != new_code:
+                art["history"].append({
+                    "time": datetime.now().strftime("%d.%m %H:%M"),
+                    "author": author,
+                    "code": art["code"]
+                })
+                # Paturam pēdējās 15 versijas, lai neaizaudzētu atmiņu
+                art["history"] = art["history"][-15:]
+
+            art["code"] = new_code
+            break
+            
+    return text
 
 def ask_colleague(colleague_name, recent_history):
     if not client:
@@ -320,12 +327,14 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <button onclick="copyCurrentArtifact()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-borderCol">📋 Kopēt</button>
                 </div>
             </div>
-            <div class="flex-1 p-3 overflow-hidden flex flex-col">
-                <span id="artifactTitle" class="text-emerald-400 text-xs font-semibold mb-2">AQ_SYSTEM_SPEC.md</span>
-                <div class="flex-1 bg-slate-950 rounded-lg p-3 overflow-auto border border-borderCol">
-                    <pre class="whitespace-pre overflow-x-auto"><code id="artifactCode" class="text-xs font-mono"></code></pre>
-                </div>
-            </div>
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+    <div class="flex items-center gap-2">
+        <span id="artifactTitle" class="text-xs font-bold text-emerald-400">AQ_SYSTEM_SPEC.md</span>
+        <select id="versionSelect" onchange="rollbackVersion(this.value)" class="hidden bg-slate-950 text-slate-400 border border-slate-800 text-[10px] rounded px-1.5 py-0.5 outline-none">
+            <option value="">🕒 Vēsture...</option>
+        </select>
+    </div>
+</div>
         </section>
     </main>
 
@@ -397,6 +406,14 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             // Izmantojam textContent, lai saglabātu precīzas rindas un atstarpes
             el.textContent = target.code;
             if (window.hljs) hljs.highlightElement(el);
+
+            // Pieliekam versiju vēstures atjaunošanu:
+            if (target.id === 'doc') {
+                updateArtifactHistoryUI(target);
+            } else {
+                const sel = document.getElementById('versionSelect');
+                if (sel) sel.classList.add('hidden');
+            }
         }
 
         function downloadArtifact() {
@@ -578,6 +595,36 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         checkAuth();
         setInterval(fetchState, 3500);
+
+        function updateArtifactHistoryUI(artifact) {
+    const select = document.getElementById('versionSelect');
+    if (!select) return;
+    if (!artifact.history || artifact.history.length === 0) {
+        select.classList.add('hidden');
+        return;
+    }
+    select.classList.remove('hidden');
+    let opts = '<option value="">🕒 Versiju vēsture (' + artifact.history.length + ')</option>';
+    artifact.history.slice().reverse().forEach((v, idx) => {
+        const realIndex = artifact.history.length - 1 - idx;
+        opts += `<option value="${realIndex}">${v.time} — ${v.author}</option>`;
+    });
+    select.innerHTML = opts;
+}
+
+async function rollbackVersion(index) {
+    if (index === '') return;
+    if (!confirm("Vai tiešām atjaunot šo specifikācijas versiju?")) {
+        document.getElementById('versionSelect').value = '';
+        return;
+    }
+    await fetch('/api/artifact/rollback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
+        body: JSON.stringify({ index: parseInt(index) })
+    });
+    fetchState();
+}
     </script>
 </body>
 </html>
@@ -628,6 +675,30 @@ def add_message():
 
     trigger_background_sync()
     return jsonify({"status": "ok"})
+
+@app.route('/api/artifact/rollback', methods=['POST'])
+def rollback_artifact():
+    if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
+    state = load_state()
+    data = request.json or {}
+    history_index = data.get("index")
+    
+    for art in state.get("artifacts", []):
+        if art.get("id") == "doc" and "history" in art and 0 <= history_index < len(art["history"]):
+            # Izvēlēto vēstures versiju paceļam par pašreizējo
+            restored = art["history"].pop(history_index)
+            # Pašreizējo ieliekam vēsturē, lai neko nepazaudētu
+            art["history"].append({
+                "time": datetime.now().strftime("%d.%m %H:%M"),
+                "author": "Rollback",
+                "code": art["code"]
+            })
+            art["code"] = restored["code"]
+            save_state_local(state)
+            trigger_background_sync()
+            return jsonify({"status": "ok"})
+            
+    return jsonify({"error": "Version not found"}), 404
 
 @app.route('/api/colleague_turn', methods=['POST'])
 def colleague_turn():
