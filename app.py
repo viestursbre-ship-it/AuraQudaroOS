@@ -144,30 +144,33 @@ def trigger_background_sync():
 
 def process_artifact_update(state, text, author="Bruno"):
     import re
-    if not text:
+    if not text or not state.get("artifacts"):
         return text
 
-    print("--- PĀRBAUDĀM BRUNO TEKSTU ARTEFAKTIEM ---")
-    match = re.search(r"```(?:markdown|python|javascript|html)?\s*\n([\s\S]*?)```", text)
+    # Meklējam Markdown koda bloku
+    match = re.search(r"```(?:markdown)?\s*\n([\s\S]*?)```", text)
     if not match:
-        match = re.search(r"```(?:markdown|python|javascript|html)?\s*\n([\s\S]+)", text)
+        match = re.search(r"```(?:markdown)?\s*\n([\s\S]+)", text)
 
     if match:
         new_code = match.group(1).strip()
-        print(f"ATRASTS KODS! Garums: {len(new_code)}")
-        found_art = False
-        for art in state.get("artifacts", []):
-            print(f"Pārbaudām artefaktu ar id: {art.get('id')}")
-            if art.get("id") == "doc":
-                found_art = True
-                art["code"] = new_code
-                save_state_local(state)
-                print(">>> VEIKSMĪGI SAGLABĀTS 3. PANELĪ! <<<")
-                break
-        if not found_art:
-            print("BRĪDINĀJUMS: Artefakts ar id 'doc' netika atrasts state sarakstā!")
-    else:
-        print("KODS NETIKA ATRASTS AR REGEX!")
+        # Ja teksts ir pietiekami garš, atjaunojam pirmo artefaktu (kas ir specifikācija)
+        if len(new_code) > 50:
+            target_art = state["artifacts"][0]
+            
+            if "history" not in target_art:
+                target_art["history"] = []
+                
+            if target_art.get("code") and target_art["code"].strip() != new_code:
+                target_art["history"].append({
+                    "time": datetime.now().strftime("%d.%m %H:%M"),
+                    "author": author,
+                    "code": target_art["code"]
+                })
+                target_art["history"] = target_art["history"][-15:]
+                
+            target_art["code"] = new_code
+            save_state_local(state)
 
     return text
 
