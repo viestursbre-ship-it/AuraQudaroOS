@@ -147,30 +147,34 @@ def process_artifact_update(state, text, author="Bruno"):
     if not text or not state.get("artifacts"):
         return text
 
-    # Meklējam Markdown koda bloku
-    match = re.search(r"```(?:markdown)?\s*\n([\s\S]*?)```", text)
-    if not match:
-        match = re.search(r"```(?:markdown)?\s*\n([\s\S]+)", text)
-
+    # 1. Ļoti elastīgs meklētājs: atrod jebko starp ``` (ar vai bez vārda markdown) un noslēdzošo ```
+    match = re.search(r"```(?:markdown|[a-z]+)?\s*([\s\S]*?)```", text, re.IGNORECASE)
+    
+    new_code = None
     if match:
         new_code = match.group(1).strip()
-        # Ja teksts ir pietiekami garš, atjaunojam pirmo artefaktu (kas ir specifikācija)
-        if len(new_code) > 50:
-            target_art = state["artifacts"][0]
+    else:
+        # Ja beigu ``` pietrūkst, paņemam visu aiz pirmā ```
+        match_open = re.search(r"```(?:markdown|[a-z]+)?\s*([\s\S]+)", text, re.IGNORECASE)
+        if match_open:
+            new_code = match_open.group(1).strip()
+
+    if new_code and len(new_code) > 50:
+        target_art = state["artifacts"][0]
+        
+        if "history" not in target_art:
+            target_art["history"] = []
             
-            if "history" not in target_art:
-                target_art["history"] = []
-                
-            if target_art.get("code") and target_art["code"].strip() != new_code:
-                target_art["history"].append({
-                    "time": datetime.now().strftime("%d.%m %H:%M"),
-                    "author": author,
-                    "code": target_art["code"]
-                })
-                target_art["history"] = target_art["history"][-15:]
-                
-            target_art["code"] = new_code
-            save_state_local(state)
+        if target_art.get("code") and target_art["code"].strip() != new_code:
+            target_art["history"].append({
+                "time": datetime.now().strftime("%d.%m %H:%M"),
+                "author": author,
+                "code": target_art["code"]
+            })
+            target_art["history"] = target_art["history"][-15:]
+            
+        target_art["code"] = new_code
+        save_state_local(state)
 
     return text
 
