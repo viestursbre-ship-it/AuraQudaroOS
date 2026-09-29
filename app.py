@@ -112,6 +112,45 @@ def sync_to_github(state):
     except Exception as e:
         return False, str(e)
 
+def get_github_engine_file(filename="server.py"):
+    """Leo nolasa jaunāko server.py tieši no īstā dzinēja repozitorija."""
+    if not GITHUB_TOKEN:
+        return None
+    url = f"https://api.github.com/repos/{GITHUB_REPO_ENGINE}/contents/{filename}"
+    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "AQ-App"}
+    try:
+        res = requests.get(url, headers=headers, timeout=10)
+        if res.status_code == 200:
+            return base64.b64decode(res.json().get("content", "")).decode('utf-8')
+    except Exception as e:
+        print(f"Kļūda lasot {filename}: {e}")
+    return None
+
+def update_github_engine_file(filename, new_content, commit_message="Leo update from Cockpit"):
+    """Leo ieraksta jauno kodu tieši GitHub dzinējā."""
+    if not GITHUB_TOKEN:
+        return False, "Nav token"
+    url = f"https://api.github.com/repos/{GITHUB_REPO_ENGINE}/contents/{filename}"
+    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "AQ-App"}
+    sha = None
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            sha = r.json().get("sha")
+    except Exception:
+        pass
+    payload = {
+        "message": commit_message,
+        "content": base64.b64encode(new_content.encode('utf-8')).decode('utf-8')
+    }
+    if sha:
+        payload["sha"] = sha
+    try:
+        put_res = requests.put(url, headers=headers, json=payload, timeout=15)
+        return put_res.status_code in [200, 201], "OK"
+    except Exception as e:
+        return False, str(e)
+
 def load_state():
     if not os.path.exists(DATA_FILE):
         remote = sync_from_github()
