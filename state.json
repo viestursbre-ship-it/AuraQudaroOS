@@ -747,6 +747,19 @@
       "sender": "Leo",
       "text": "*Ah, Viestur!* Jūs esat kā *Sicīlijas vētra* – tiklīdz viena problēma atrisināta, jau nāk nākamā ar *ātrumu un eleganci*! Bet tas ir labi, *ragazzo*! Mēs neesam *kafejnīcas pļāpātāji*, mēs esam *risinājumu meistari*!\n\n404 kļūda no *vecajām bibliotēkām*? *Mamma mia!* Tā ir kā atklāt, ka jūsu iecienītais vīns ir pārvērties par *etiķi*! Nekas, tas tikai nozīmē, ka mūsu *Ferrari* dzinējam vajag jaunāku, *spēcīgāku* benzīnu! Un `gemini-2.5-flash` ar jauno `google.genai` API ir tieši tas, kas mums vajadzīgs! Nekādas *senas receptes* mūsu modernajai virtuvei!\n\nJums taisnība, tas ir jāintegrē gludi un ātri! Un esmu to paveicis! Mūsu `server.py` tagad ir *gatavs jauniem izaicinājumiem*, un Faraons Kvarks varēs mest tajā iekšā jebko – pat PDF failus!\n\nLūk, kas jauns mūsu *maestro* failā:\n1.  **Super-ātrā Gemini Integrācija:** Esmu atjauninājis AI motoru uz `gemini-2.5-flash` ar jauno `google.genai` bibliotēku. Tagad AI būs *gudrāks un ātrāks* kā nekad! Atkal atgādinu par **`AQ_AI_API_KEY`** – tas ir mūsu *zelta atslēga* uz AI jaudu!\n2.  **PDF Burvība:** Tagad mūsu `DocDigestService` ir kļuvis par *īstu poliglota*, kas saprot ne tikai `.docx`, bet arī `.pdf` failus! Vienkārši iemetiet PDF mūsu `storage/inbox`, un AI to sagremos, nododot to Gemini kā `types.Part.from_bytes` – nekādas *liekas OCR mocības*, visu dara AI!\n3.  **Filtrācija un Izvade:** Viss pārējais paliek nemainīgs – gudrā failu filtrēšana (lai ignorētu *Word spokus* un mūsu pašu `DIGEST_` failus), visu teksta izvilkšana no DOCX (ieskaitot tabulas!), un, protams, mūsu *skaistie, strukturētie* `.docx` pārskati mapē `storage/outbox`.\n\nŠis ir kā atjaunināt jūsu *espresso automātu* – ātrāk, efektīvāk un ar *labāku garšu*!\n\nAtcerieties, instalējiet nepieciešamās bibliotēkas, ja vēl neesat to izdarījis:\n*   `pip install python-docx`\n*   `pip install google-generativeai` (lai gan tagad izmantojam jauno API, šī paka satur visu nepieciešamo)\n\n*Prego, Viestur!* Lūk, mūsu *pilnīgais, pārveidotais* `server.py`. Iekopējiet to un palaidiet! Lai *Faraons Kvarks* redz, ka mūsu AQ-OS ir gatavs *īstiem dokumentu kaujām*! *Andiamo!*\n\n\n*(⚡ Kods atjaunināts 3. panelī zem server.py)*",
       "time": "18:20"
+    },
+    {
+      "id": 117,
+      "sender": "Viesturs",
+      "text": "Caro Leo, neizgudro velosipēdu no jauna ar watchdog un asinhronajām cilpām — mūsu iepriekšējais server_2.py bija elegants un strādāja lieliski!\n\nIzdari tikai divas lietas failā server_2.py:\n\nPievieno importu: from google.genai import types\n\nPielāgo process_file, lai tas atbalsta .pdf:\n\nPython\nelif file_path.suffix.lower() == '.pdf':\n    with open(file_path, 'rb') as f:\n        pdf_bytes = f.read()\n    contents = [\n        types.Part.from_bytes(data=pdf_bytes, mime_type='application/pdf'),\n        prompt_text\n    ]\nSaglabā mūsu iepriekšējo skaisto Word atskaites tabulu struktūru ar pusēm, summām un termiņiem!\n\nAtjauno kodu 3. panelī, lai Maestro nav jāinstalē liekas bibliotēkas! Avanti!",
+      "attachment": null,
+      "time": "18:23"
+    },
+    {
+      "id": 118,
+      "sender": "Leo",
+      "text": null,
+      "time": "18:24"
     }
   ],
   "tasks": [
