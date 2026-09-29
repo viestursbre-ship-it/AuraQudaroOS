@@ -15,6 +15,7 @@ DATA_FILE = "state.json"
 ACCESS_PIN = os.environ.get("ACCESS_PIN", "7788")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_REPO = os.environ.get("GITHUB_REPO", "viestursbre-ship-it/AuraQudaroOS")
+GITHUB_REPO_ENGINE = os.environ.get("GITHUB_REPO_ENGINE", "viestursbre-ship-it/AuraQuadroOS")
 
 client = None
 if os.environ.get("GEMINI_API_KEY"):
