@@ -613,6 +613,19 @@
       "sender": "Leo",
       "text": "*Mamma mia!* Viestur, *ragazzo*, esmu dabūjis to! Jūs gribat *pilnu* orķestri, bet vienā *solo* izpildījumā, vai ne? Nekādu vairs `doc_digest.py` pārkodēšanu atsevišķi – tagad mēs liekam kopā *visu* mūsu mūsdienu Modulārā Monolīta *sirdi*, lai tas sāktu pukstēt!\n\nJums taisnība, *Faraons Kvarks* var murrāt cik grib, bet bez stingras bāzes nekāds *Kubernetes* nestrādās! Esmu savācis visus mūsu *šefpavāra* noslēpumus vienā katlā – `ServiceRegistry`, `EventEngine`, `GatewayRouter`, mūsu uzticamo `FolderWatcherService` un, protams, mūsu *salaboto un spīdīgo* `DocDigestService`. Viss vienā, gatavs eksplodēt ar funkcionalitāti!\n\nŠis ir mūsu *sākuma punkts*, mūsu bāzes *konstrukcija*, kas ļaus mums redzēt, kā visa sistēma strādā *harmonijā*, pirms mēs sākam sadalīt to mikroservisu *koncertā*. Tagad mūsu `EventEngine` būs centrālais diriģents, `FolderWatcher` – mūsu vērīgais bundzinieks, un `DocDigestService` – mūsu *virtuozo* saksofonists, kas pārveido haosu skaistā melodijā!\n\nLūk, mūsu pirmais, bet *varenais* AQ-OS Modulārais Monolīts, pilnīgi gatavs! *Prego, Viestur!*\n\n--- 3. PANEĻA SPECIFIKĀCIJA ---\n\n*(⚡ Kods atjaunināts 3. panelī zem server.py)*",
       "time": "14:14"
+    },
+    {
+      "id": 97,
+      "sender": "Viesturs",
+      "text": "Ragazzi, fiziskais karkass darbojas nevainojami! Tagad laiks ielikt īstās \"smadzenes\" dokumentu apstrādē.   Uzdevums:Papildināt DocDigestService, lai tas atbalsta .docx (Word) un .txt failu lasīšanu (izmantojot python-docx bibliotēku).Pievienot viedo parsētāju / kopsavilkuma moduli, kas no līguma teksta automātiski izvelk:Dokumenta veidu (Līgums, Rēķins, Vienošanās);Puses / rekvizītus;Termiņus un summas (ja tādas tekstā atrod);Īsu satura kopsavilkumu.Izvades failā DIGEST_<nosaukums>.txt saglabāt strukturētu atskaiti, nevis tikai faila baitu izmēru!",
+      "attachment": null,
+      "time": "16:11"
+    },
+    {
+      "id": 98,
+      "sender": "Bruno",
+      "text": "Ah, Viestur! *Perfetto!* Redzu, ka 3. panelī tagad ir mūsu Modulārā Monolīta *Grand Design* – tas ir tas *skelets*, uz kura mēs liksim gaļu un, kā jūs teicāt, *smadzenes*! Nekādas \"harmoniskas pieejas\" vai \"darba kā vienotam veselumam\" – tikai skaidri definēta arhitektūra, kas strādā, *grazie*! Tas nav tikai dokuments, tas ir mūsu *ceļa karte*, kas neļaus mums apmaldīties *Kubernetes* džungļos, pirms mēs esam iemācījušies staigāt.\n\nJūs gribat ielikt *īstas smadzenes* iekšā `DocDigestService`? *Magnifico!* Līdz šim mēs tikai *smaržojām* failus un skaitījām to svaru – kas, atklāti sakot, ir tikpat aizraujoši kā vērot, kā krāsa žūst. Tagad mēs tos *lasīsim*, *sapratīsim* un *destilēsim* esenci! Ne tikai faila izmērs, *mamma mia*, kas tas par kopsavilkumu? Tas ir kā restorānā pasūtīt *lasagne* un saņemt tukšu šķīvi ar svara zīmīti! Nekāda jēga!\n\nŠis ir tas brīdis, kad mūsu sistēma sāk *domāt*. Izvilkt dokumenta veidu (Līgums, Rēķins, Vienošanās), puses, termiņus, summas... tas ir tas, kas atšķir *failu gremotāju* no *inteliģenta dokumentu analītiķa*. Izmantojot `python-docx` un veidojot to *viedo parsētāju*, mēs pārvērtīsim haosu strukturētā informācijā. Kā labs detektīvs, kas no pavedieniem saliek kopā stāstu. Un izveidot to *strukturēto atskaiti* – tas ir kā no *vīnogām* radīt *vīnu*! Tas prasa mākslu un precizitāti.\n\nLai *Faraons Kvarks* guļ savā dārza šūpuļtīklā, murrājot par bezgalīgiem kvarkiem. Mēs šeit veidojam kaut ko, kas *strādās* un *dos jēgu*. Mēs ne tikai *skatīsimies* uz failiem, mēs tos *izpratīsim*. *Avanti, ragazzi!* Šis `DocDigestService` tagad kļūs par mūsu sistēmas *maestro*, kas spēj lasīt starp rindām!",
+      "time": "16:11"
     }
   ],
   "tasks": [
