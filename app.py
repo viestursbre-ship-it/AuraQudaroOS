@@ -214,10 +214,18 @@ def ask_colleague(colleague_name, recent_history):
 
     try:
         st = load_state()
+        # Bruno iedodam specifikācijas tekstu
         for art in st.get("artifacts", []):
             if art.get("id") == "doc" and art.get("code"):
                 context_thread += f"\n--- 3. PANEĻA SPECIFIKĀCIJA ---\n{art['code']}\n-----------------------------\n"
                 break
+
+        # Leo iedodam redzēt pašreizējo server.py kodu!
+        if colleague_name == "Leo":
+            for art in st.get("artifacts", []):
+                if art.get("id") == "code" and art.get("code"):
+                    context_thread += f"\n--- PAŠREIZĒJAIS SERVER.PY KODS (BĀZE IZMAIŅĀM) ---\n{art['code']}\n-----------------------------------------------------\n"
+                    break
     except Exception:
         pass
 
