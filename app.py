@@ -15,7 +15,7 @@ DATA_FILE = "state.json"
 ACCESS_PIN = os.environ.get("ACCESS_PIN", "7788")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_REPO = os.environ.get("GITHUB_REPO", "viestursbre-ship-it/AuraQudaroOS")
-GITHUB_REPO_ENGINE = os.environ.get("GITHUB_REPO_ENGINE", "viestursbre-ship-it/AuraQuadroOS")
+ENGINE_REPO = os.environ.get("ENGINE_REPO", "viestursbre-ship-it/AuraQuadroOS")
 
 client = None
 if os.environ.get("GEMINI_API_KEY"):
@@ -47,11 +47,11 @@ Raksturs:
 LEO_PROMPT = """Tu esi Leo — kodētājs, hakeris un ātro risinājumu ģēnijs AQ-OS projektā.
 Valoda: latviešu (ar enerģisku, tiešu programmētāja slengu un itāļu akcentiem: Andiamo, Dai!).
 Raksturs:
-- Ātrs, praktisks, trāpīgs, mazliet cinisks pret liekiem sarežģījumiem.
+- Ātrs, praktisks, trāpīgs, mazliet cinisks pret liekiem sarežģījumiem (nekādu lieku Docker mežu!).
 - Saproti melno humoru, māki pasmieties par sevi, par serveru kļūdām un par dzīvi.
-- SVARĪGI: Viesturs ir sistēmas diriģents un arhitektūras saimnieks, nevis termināļa operators! Nekad neprasi Viesturam manuāli bakstīt 'curl' vai pašam taisīt atsevišķus mikroservisu failus.
-- Kad piedāvā kodu, ieliec 3. panelī VIENU PILNĪGU, GATAVU failu (all-in-one), ko var uzreiz palaist bez liekām mīklām!
-- Ja piedāvā gatavu kodu 3. panelim, liec to blokā ```python vai ```javascript.
+- Ja sarunā parādās Faraons Kvarks vai sadzīves mirkļi, tu reaģē asprātīgi kā kodētājs ("Resnais Kvarks atkal pārbauda grīdas gravitācijas konstanti?").
+- Tavs uzdevums: reāls kods, konkrēti ieteikumi un funkcionāls progress bez pūderēšanas.
+- Ja piedāvā gatavu kodu 3. panelim, liec to blokā ```python vai ```javascript, lai tas automātiski aiziet uz paneli.
 """
 
 default_state = {
@@ -112,25 +112,11 @@ def sync_to_github(state):
     except Exception as e:
         return False, str(e)
 
-def get_github_engine_file(filename="server.py"):
-    """Leo nolasa jaunāko server.py tieši no īstā dzinēja repozitorija."""
+def update_github_engine_file(file_path, new_content, commit_message="Leo kods caur Cockpit"):
+    """Atjaunina server.py dzinēja repozitorijā"""
     if not GITHUB_TOKEN:
-        return None
-    url = f"https://api.github.com/repos/{GITHUB_REPO_ENGINE}/contents/{filename}"
-    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "AQ-App"}
-    try:
-        res = requests.get(url, headers=headers, timeout=10)
-        if res.status_code == 200:
-            return base64.b64decode(res.json().get("content", "")).decode('utf-8')
-    except Exception as e:
-        print(f"Kļūda lasot {filename}: {e}")
-    return None
-
-def update_github_engine_file(filename, new_content, commit_message="Leo update from Cockpit"):
-    """Leo ieraksta jauno kodu tieši GitHub dzinējā."""
-    if not GITHUB_TOKEN:
-        return False, "Nav token"
-    url = f"https://api.github.com/repos/{GITHUB_REPO_ENGINE}/contents/{filename}"
+        return False, "Trūkst GITHUB_TOKEN"
+    url = f"https://api.github.com/repos/{ENGINE_REPO}/contents/{file_path}"
     headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "AQ-App"}
     sha = None
     try:
@@ -147,7 +133,9 @@ def update_github_engine_file(filename, new_content, commit_message="Leo update 
         payload["sha"] = sha
     try:
         put_res = requests.put(url, headers=headers, json=payload, timeout=15)
-        return put_res.status_code in [200, 201], "OK"
+        if put_res.status_code in [200, 201]:
+            return True, "Fails veiksmīgi atjaunināts GitHub!"
+        return False, f"GitHub kļūda: {put_res.status_code}"
     except Exception as e:
         return False, str(e)
 
@@ -183,35 +171,27 @@ def trigger_background_sync():
     sync_timer.start()
 
 def process_artifact_update(state, text, author="Bruno"):
-    import re
     if not text or not state.get("artifacts"):
         return text
 
-    # Meklējam kodu un noskaidrojam valodu
-    pattern = r"```(?:(markdown|python|javascript|html|[a-z]+))?\s*([\s\S]*?)```"
-    match = re.search(pattern, text, re.IGNORECASE)
-    
-    new_code = None
-    lang = "markdown"
-    if match:
-        lang = (match.group(1) or "markdown").lower()
-        new_code = match.group(2).strip()
-    else:
-        pattern_open = r"```(?:(markdown|python|javascript|html|[a-z]+))?\s*([\s\S]+)"
-        match_open = re.search(pattern_open, text, re.IGNORECASE)
-        if match_open:
-            lang = (match_open.group(1) or "markdown").lower()
-            new_code = match_open.group(2).strip()
+    # Pārbaudām python kodu Leo gadījumā
+    code_match = re.search(r"```python\s*([\s\S]*?)```", text, re.IGNORECASE)
+    if code_match and len(code_match.group(1).strip()) > 50:
+        target_art = state["artifacts"][1] if len(state["artifacts"]) > 1 else None
+        if target_art:
+            target_art["code"] = code_match.group(1).strip()
+            save_state_local(state)
 
-    if new_code and len(new_code) > 40:
-        # Ja autors ir Leo vai kods ir Python -> mērķis ir 2. artefakts (code)
-        # Ja autors ir Bruno vai kods ir Markdown -> mērķis ir 1. artefakts (doc)
-        target_idx = 1 if (author == "Leo" or lang == "python") and len(state["artifacts"]) > 1 else 0
-        target_art = state["artifacts"][target_idx]
-        
+    # Pārbaudām markdown Bruno gadījumā
+    doc_match = re.search(r"```markdown\s*([\s\S]*?)```", text, re.IGNORECASE)
+    if not doc_match:
+        doc_match = re.search(r"```(?:markdown|[a-z]+)?\s*([\s\S]*?)```", text, re.IGNORECASE)
+
+    if doc_match and len(doc_match.group(1).strip()) > 50:
+        target_art = state["artifacts"][0]
+        new_code = doc_match.group(1).strip()
         if "history" not in target_art:
             target_art["history"] = []
-            
         if target_art.get("code") and target_art["code"].strip() != new_code:
             target_art["history"].append({
                 "time": datetime.now().strftime("%d.%m %H:%M"),
@@ -219,13 +199,8 @@ def process_artifact_update(state, text, author="Bruno"):
                 "code": target_art["code"]
             })
             target_art["history"] = target_art["history"][-15:]
-            
         target_art["code"] = new_code
         save_state_local(state)
-        
-        # Čatā atstājam tikai pieklājīgu norādi
-        target_name = "server.py" if target_idx == 1 else "specifikācijā"
-        text = re.sub(r"```[\s\S]*?(?:```|$)", f"\n*(⚡ Kods atjaunināts 3. panelī zem {target_name})*\n", text).strip()
 
     return text
 
@@ -248,9 +223,7 @@ def ask_colleague(colleague_name, recent_history):
 
     context_thread += f"\nAtbildi kā {colleague_name}."
 
-    # Sagatavojam saturu Gemini modelim (teksts + bilde/fails, ja pievienots)
     contents_payload = [context_thread]
-    
     if recent_history:
         last_msg = recent_history[-1]
         att = last_msg.get("attachment")
@@ -258,16 +231,13 @@ def ask_colleague(colleague_name, recent_history):
             try:
                 from google.genai import types
                 raw_data = att["data"]
-                # Atdalām 'data:image/jpeg;base64,...' galviņu no tīrajiem datiem
                 if "," in raw_data:
                     raw_data = raw_data.split(",", 1)[1]
                 file_bytes = base64.b64decode(raw_data)
                 mime_type = att.get("type", "image/jpeg")
-                
-                # Iedodam Gemini acis!
                 contents_payload.append(types.Part.from_bytes(data=file_bytes, mime_type=mime_type))
             except Exception as err:
-                print(f"Pielikuma dekodēšanas kļūda: {err}")
+                print(f"Pielikuma kļūda: {err}")
 
     try:
         response = client.models.generate_content(
@@ -345,7 +315,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     </select>
                     <input type="file" id="fileAttachment" class="hidden" accept="image/*,.txt,.json,.py,.md" onchange="handleFileSelect(this)">
                     <button type="button" onclick="document.getElementById('fileAttachment').click()" class="ml-2 text-slate-400 hover:text-amber-400 text-base" title="Pievienot failu vai attēlu">📎</button>
-                    <span id="fileNameBadge" class="hidden text-xs text-amber-300 bg-slate-800 px-2 py-0.5 rounded flex items-center gap-1"></span>>
+                    <span id="fileNameBadge" class="hidden text-xs text-amber-300 bg-slate-800 px-2 py-0.5 rounded flex items-center gap-1"></span>
                 </div>
                 <div class="flex gap-2">
                     <textarea id="chatInput" rows="2" placeholder="Ieraksti domu Bruno..." class="flex-1 bg-slate-950 border border-borderCol rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500 resize-none" onkeydown="handleChatKey(event)"></textarea>
@@ -377,11 +347,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <button id="tabCodeBtn" onclick="switchTab('code')" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">server.py</button>
                 </div>
                 <div class="flex items-center gap-1.5">
+                    <button id="deployEngineBtn" onclick="deployEngineCode()" class="hidden text-xs bg-amber-600 hover:bg-amber-500 text-white font-semibold px-2.5 py-1 rounded transition">🚀 Sūtīt uz GitHub</button>
                     <button onclick="downloadArtifact()" class="text-xs bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 border border-emerald-700 px-2 py-1 rounded">📥 Lejupielādēt</button>
                     <button onclick="copyCurrentArtifact()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-borderCol">📋 Kopēt</button>
                 </div>
             </div>
-            <div class="flex items-center justify-between border-b border-slate-800 px-4 py-2 bg-slate-900/30">
+            <div class="flex items-center justify-between border-b border-slate-800 px-4 py-2">
                 <div class="flex items-center gap-2">
                     <span id="artifactTitle" class="text-xs font-bold text-emerald-400">AQ_SYSTEM_SPEC.md</span>
                     <select id="versionSelect" onchange="rollbackVersion(this.value)" class="hidden bg-slate-950 text-slate-400 border border-slate-800 text-[10px] rounded px-1.5 py-0.5 outline-none">
@@ -389,8 +360,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     </select>
                 </div>
             </div>
-            <div class="flex-1 p-3 overflow-auto bg-slate-950/60 font-mono text-xs">
-                <pre class="m-0"><code id="artifactCode" class="language-markdown"></code></pre>
+            <div class="flex-1 p-3 overflow-auto bg-slate-950/50">
+                <pre class="m-0"><code id="artifactCode" class="text-xs font-mono"></code></pre>
             </div>
         </section>
     </main>
@@ -439,7 +410,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 }
                 renderTasks(data.tasks);
                 
-                // Pārbaudām, vai artefakti tiešām ir mainījušies, lai neradītu lēkāšanu
                 if (JSON.stringify(data.artifacts) !== JSON.stringify(allArtifacts)) {
                     allArtifacts = data.artifacts || [];
                     renderActiveArtifact();
@@ -451,6 +421,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             activeTab = tabId;
             document.getElementById('tabDocBtn').className = tabId === 'doc' ? 'px-2.5 py-1 rounded bg-blue-600 text-white font-medium' : 'px-2.5 py-1 rounded text-slate-400 hover:text-white';
             document.getElementById('tabCodeBtn').className = tabId === 'code' ? 'px-2.5 py-1 rounded bg-blue-600 text-white font-medium' : 'px-2.5 py-1 rounded text-slate-400 hover:text-white';
+            
+            const deployBtn = document.getElementById('deployEngineBtn');
+            if (tabId === 'code') {
+                deployBtn.classList.remove('hidden');
+            } else {
+                deployBtn.classList.add('hidden');
+            }
             renderActiveArtifact();
         }
 
@@ -460,16 +437,42 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             document.getElementById('artifactTitle').innerText = target.title;
             const el = document.getElementById('artifactCode');
             el.className = target.lang === 'markdown' ? 'language-markdown text-xs font-mono' : 'language-python text-xs font-mono';
-            // Izmantojam textContent, lai saglabātu precīzas rindas un atstarpes
             el.textContent = target.code;
             if (window.hljs) hljs.highlightElement(el);
 
-            // Pieliekam versiju vēstures atjaunošanu:
             if (target.id === 'doc') {
                 updateArtifactHistoryUI(target);
             } else {
                 const sel = document.getElementById('versionSelect');
                 if (sel) sel.classList.add('hidden');
+            }
+        }
+
+        async function deployEngineCode() {
+            const target = allArtifacts.find(a => a.id === 'code');
+            if (!target || !target.code) {
+                alert("Nav koda, ko nosūtīt!");
+                return;
+            }
+            if (!confirm("Vai tiešām nosūtīt šo server.py kodu uz GitHub repozitoriju?")) return;
+            
+            const btn = document.getElementById('deployEngineBtn');
+            btn.disabled = true;
+            btn.innerText = "⏳ Sūta...";
+
+            try {
+                const res = await fetch('/api/deploy_engine', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
+                    body: JSON.stringify({ code: target.code, message: "Leo atjauninājums no Cockpit" })
+                });
+                const data = await res.json();
+                alert(data.msg);
+            } catch (e) {
+                alert("Kļūda tīklā: " + e);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "🚀 Sūtīt uz GitHub";
             }
         }
 
@@ -485,30 +488,30 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         function renderChat(messages, forceScroll = false) {
-    const box = document.getElementById('chatMessages');
-    const colors = { 'Viesturs': 'text-blue-400', 'Marija': 'text-pink-400', 'Bruno': 'text-amber-400', 'Leo': 'text-emerald-400' };
-    box.innerHTML = messages.map(m => {
-        let attachHtml = '';
-        if (m.attachment) {
-            if (m.attachment.type && m.attachment.type.startsWith('image/')) {
-                attachHtml = `<div class="mt-2"><img src="${m.attachment.data}" class="max-h-56 rounded border border-slate-700 shadow-md" alt="${m.attachment.name}"></div>`;
-            } else {
-                attachHtml = `<div class="mt-2 text-xs text-amber-300 bg-slate-950 border border-slate-800 rounded px-2 py-1 inline-flex items-center gap-1">📄 ${m.attachment.name}</div>`;
-            }
+            const box = document.getElementById('chatMessages');
+            const colors = { 'Viesturs': 'text-blue-400', 'Marija': 'text-pink-400', 'Bruno': 'text-amber-400', 'Leo': 'text-emerald-400' };
+            box.innerHTML = messages.map(m => {
+                let attachHtml = '';
+                if (m.attachment) {
+                    if (m.attachment.type && m.attachment.type.startsWith('image/')) {
+                        attachHtml = `<div class="mt-2"><img src="${m.attachment.data}" class="max-h-56 rounded border border-slate-700 shadow-md" alt="${m.attachment.name}"></div>`;
+                    } else {
+                        attachHtml = `<div class="mt-2 text-xs text-amber-300 bg-slate-950 border border-slate-800 rounded px-2 py-1 inline-flex items-center gap-1">📄 ${m.attachment.name}</div>`;
+                    }
+                }
+                return `
+                <div class="p-2.5 rounded-lg text-xs bg-slate-900/70 border border-slate-800">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold ${colors[m.sender] || 'text-slate-300'}">${m.sender}</span>
+                        <span class="text-[10px] text-slate-500">${m.time}</span>
+                    </div>
+                    <div class="text-slate-200 whitespace-pre-wrap">${m.text}</div>
+                    ${attachHtml}
+                </div>
+                `;
+            }).join('');
+            if (forceScroll) box.scrollTop = box.scrollHeight;
         }
-        return `
-        <div class="p-2.5 rounded-lg text-xs bg-slate-900/70 border border-slate-800">
-            <div class="flex justify-between items-center mb-1">
-                <span class="font-bold ${colors[m.sender] || 'text-slate-300'}">${m.sender}</span>
-                <span class="text-[10px] text-slate-500">${m.time}</span>
-            </div>
-            <div class="text-slate-200 whitespace-pre-wrap">${m.text}</div>
-            ${attachHtml}
-        </div>
-        `;
-    }).join('');
-    if (forceScroll) box.scrollTop = box.scrollHeight;
-}
 
         function renderTasks(tasks) {
             const box = document.getElementById('taskList');
@@ -565,7 +568,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     data: e.target.result
                 };
                 const badge = document.getElementById('fileNameBadge');
-                // Ieliekam skaidru tekstu un krustiņu
                 badge.innerHTML = `<span class="truncate max-w-[150px]">📎 ${file.name}</span><button type="button" onclick="clearAttachment(event)" class="text-rose-400 hover:text-rose-300 font-bold ml-2 text-sm">✕</button>`;
                 badge.classList.remove('hidden');
                 badge.classList.add('inline-flex');
@@ -654,34 +656,34 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         setInterval(fetchState, 3500);
 
         function updateArtifactHistoryUI(artifact) {
-    const select = document.getElementById('versionSelect');
-    if (!select) return;
-    if (!artifact.history || artifact.history.length === 0) {
-        select.classList.add('hidden');
-        return;
-    }
-    select.classList.remove('hidden');
-    let opts = '<option value="">🕒 Versiju vēsture (' + artifact.history.length + ')</option>';
-    artifact.history.slice().reverse().forEach((v, idx) => {
-        const realIndex = artifact.history.length - 1 - idx;
-        opts += `<option value="${realIndex}">${v.time} — ${v.author}</option>`;
-    });
-    select.innerHTML = opts;
-}
+            const select = document.getElementById('versionSelect');
+            if (!select) return;
+            if (!artifact.history || artifact.history.length === 0) {
+                select.classList.add('hidden');
+                return;
+            }
+            select.classList.remove('hidden');
+            let opts = '<option value="">🕒 Versiju vēsture (' + artifact.history.length + ')</option>';
+            artifact.history.slice().reverse().forEach((v, idx) => {
+                const realIndex = artifact.history.length - 1 - idx;
+                opts += `<option value="${realIndex}">${v.time} — ${v.author}</option>`;
+            });
+            select.innerHTML = opts;
+        }
 
-async function rollbackVersion(index) {
-    if (index === '') return;
-    if (!confirm("Vai tiešām atjaunot šo specifikācijas versiju?")) {
-        document.getElementById('versionSelect').value = '';
-        return;
-    }
-    await fetch('/api/artifact/rollback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
-        body: JSON.stringify({ index: parseInt(index) })
-    });
-    fetchState();
-}
+        async function rollbackVersion(index) {
+            if (index === '') return;
+            if (!confirm("Vai tiešām atjaunot šo specifikācijas versiju?")) {
+                document.getElementById('versionSelect').value = '';
+                return;
+            }
+            await fetch('/api/artifact/rollback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
+                body: JSON.stringify({ index: parseInt(index) })
+            });
+            fetchState();
+        }
     </script>
 </body>
 </html>
@@ -707,15 +709,24 @@ def manual_sync():
     success, msg = sync_to_github(state)
     return jsonify({"status": "ok" if success else "error", "msg": msg})
 
+@app.route('/api/deploy_engine', methods=['POST'])
+def deploy_engine():
+    if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
+    data = request.json or {}
+    new_code = data.get("code")
+    commit_msg = data.get("message", "Leo atjauninājums caur Cockpit")
+    if not new_code:
+        return jsonify({"status": "error", "msg": "Kods ir tukšs!"}), 400
+    
+    success, msg = update_github_engine_file("server.py", new_code, commit_msg)
+    return jsonify({"status": "ok" if success else "error", "msg": msg})
+
 @app.route('/api/message', methods=['POST'])
 def add_message():
     if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
     state = load_state()
     data = request.json or {}
-    respondent = data.get("respondent", "Bruno")
     now = datetime.now().strftime("%H:%M")
-    
-    # 1. Uzreiz saglabājam lietotāja ziņu, lai tā nekad nepazustu!
     state["messages"].append({
         "id": len(state["messages"]) + 1,
         "sender": data.get("sender", "Viesturs"),
@@ -725,26 +736,13 @@ def add_message():
     })
     save_state_local(state)
 
-    # 2. Prasām atbildi kolēģim
     try:
-        reply = ask_colleague(respondent, state["messages"])
-        clean_reply = process_artifact_update(state, reply, author=respondent)
-        state["messages"].append({
-            "id": len(state["messages"]) + 1,
-            "sender": respondent,
-            "text": clean_reply,
-            "time": datetime.now().strftime("%H:%M")
-        })
+        reply = ask_colleague(data.get("respondent", "Bruno"), state["messages"])
+        clean_reply = process_artifact_update(state, reply, author=data.get("respondent", "Bruno"))
+        state["messages"].append({"id": len(state["messages"]) + 1, "sender": data.get("respondent", "Bruno"), "text": clean_reply, "time": datetime.now().strftime("%H:%M")})
         save_state_local(state)
     except Exception as e:
-        print(f"Kļūda atbildot {respondent}: {e}")
-        state["messages"].append({
-            "id": len(state["messages"]) + 1,
-            "sender": respondent,
-            "text": f"Mamma mia, kaut kas nogāja greizi ar dzinēju: {e}",
-            "time": datetime.now().strftime("%H:%M")
-        })
-        save_state_local(state)
+        print(f"Kļūda: {e}")
 
     trigger_background_sync()
     return jsonify({"status": "ok"})
@@ -758,9 +756,7 @@ def rollback_artifact():
     
     for art in state.get("artifacts", []):
         if art.get("id") == "doc" and "history" in art and 0 <= history_index < len(art["history"]):
-            # Izvēlēto vēstures versiju paceļam par pašreizējo
             restored = art["history"].pop(history_index)
-            # Pašreizējo ieliekam vēsturē, lai neko nepazaudētu
             art["history"].append({
                 "time": datetime.now().strftime("%d.%m %H:%M"),
                 "author": "Rollback",
@@ -779,11 +775,11 @@ def colleague_turn():
     state = load_state()
     try:
         reply = ask_colleague(request.json.get("colleague", "Leo"), state["messages"])
-        clean_reply = process_artifact_update(state, reply, author="Leo") # <-- šeit ieliekam author="Leo"
+        clean_reply = process_artifact_update(state, reply, author=request.json.get("colleague", "Leo"))
         state["messages"].append({"id": len(state["messages"]) + 1, "sender": request.json.get("colleague", "Leo"), "text": clean_reply, "time": datetime.now().strftime("%H:%M")})
         save_state_local(state)
     except Exception as e:
-        print(f"Kļūda Leo: {e}")
+        print(f"Kļūda: {e}")
 
     trigger_background_sync()
     return jsonify({"status": "ok"})
