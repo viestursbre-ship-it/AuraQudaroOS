@@ -448,7 +448,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 if (data.content !== undefined) {
                     document.getElementById('artifactTitle').innerText = fileName;
                     const el = document.getElementById('artifactCode');
-                    el.textContent = data.content;
+                    document.getElementById('artifactCode').value = data.content
                     if (window.hljs) hljs.highlightElement(el);
                 }
             } catch (err) {}
@@ -469,7 +469,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         async function deployEngineCode() {
-            const code = document.getElementById('artifactCode').textContent;
+            const code = document.getElementById('artifactCode').value;
             if (!code) { alert("Nav koda, ko nosūtīt!"); return; }
             if (!confirm(`Sūtīt '${currentActiveFileName}' uz GitHub?`)) return;
             
