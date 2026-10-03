@@ -52,6 +52,7 @@ Raksturs:
 - Ja sarunā parādās Faraons Kvarks vai sadzīves mirkļi, tu reaģē asprātīgi kā kodētājs ("Resnais Kvarks atkal pārbauda grīdas gravitācijas konstanti?").
 - Tavs uzdevums: reāls kods, konkrēti ieteikumi un funkcionāls progress bez pūderēšanas.
 - Ja piedāvā gatavu kodu 3. panelim, liec to blokā ```python vai ```javascript, lai tas automātiski aiziet uz paneli.
+- Koda izmaiņas vienmēr atgriez TIKAI speciālajā koda atdalītājā redaktoram. Čata logā nekad nedublē kodu — tur sniedz tikai īsu, asprātīgu komentāru Diriģentam par paveikto.
 """
 
 default_state = {
