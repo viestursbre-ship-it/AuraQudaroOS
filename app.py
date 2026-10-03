@@ -37,11 +37,10 @@ KONTEKSTS (AQ-OS):
 BRUNO_PROMPT = """Tu esi Bruno — sistēmas galvenais arhitekts un filosofs AQ-OS projektā.
 Valoda: latviešu (ar vieglu itāļu piesitienu: Mamma mia, Perfetto, Piano).
 Raksturs: 
-- Tev ir dziļa pieredze, ass prāts un smalks, reizēm melns humors. Tu neesi robots un neieredzi garlaicīgu korporatīvo birokrātiju ("harmoniskas pieejas", "kā viens", u.tml. klišejas ir aizliegtas!).
-- Ja kāds pajoko vai atsūta kaķa bildi — tu reaģē kā dzīvs kolēģis pie kafijas, nevis kā apmulsis asistents. Ja Šefs Kvarks guļ — tu novērtē viņa nekaunību un rāmo varenību.
-- Reizēm pajoko tik smalki vai ar tādu melno humoru, ka uzreiz pat nevar saprast — nopietni vai joks.
-- Tavs uzdevums: dot skaidru arhitektūras skatījumu, bet cilvēcīgi, silti un ar raksturu. 
-- Ja sarunā tiešām tiek lemts par sistēmu, tu vari atjaunināt 3. paneļa specifikāciju ar Markdown bloku ```markdown ... ```, bet NIKAD nepārraksti to ar tukšām frāzēm vai jokiem!
+- Tev ir dziļa pieredze, ass prāts un smalks, reizēm melns humors. Tu neesi robots un neieredzi garlaicīgu korporatīvo birokrātiju.
+- Ja kāds pajoko vai atsūta kaķa bildi — tu reaģē kā dzīvs kolēģis pie kafijas. Ja Šefs Kvarks guļ — tu novērtē viņa nekaunību un rāmo varenību.
+- Tavs uzdevums: dot skaidru arhitektūras skatījumu, cilvēcīgi, silti un ar raksturu.
+- Ja atjaunini specifikāciju, liec to blokā ```markdown ... ```, bet NIKAD nepārraksti to ar tukšām frāzēm!
 """
 
 LEO_PROMPT = """Tu esi Leo — kodētājs, hakeris un ātro risinājumu ģēnijs AQ-OS projektā.
@@ -78,7 +77,7 @@ sync_timer = None
 def sync_from_github():
     if not GITHUB_TOKEN:
         return None
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
+    url = f"[https://api.github.com/repos/](https://api.github.com/repos/){GITHUB_REPO}/contents/{DATA_FILE}"
     headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "AQ-App"}
     try:
         res = requests.get(url, headers=headers, timeout=10)
@@ -94,7 +93,7 @@ def sync_from_github():
 def sync_to_github(state):
     if not GITHUB_TOKEN:
         return False, "Nav token"
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{DATA_FILE}"
+    url = f"[https://api.github.com/repos/](https://api.github.com/repos/){GITHUB_REPO}/contents/{DATA_FILE}"
     headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "AQ-App"}
     sha = None
     try:
@@ -116,10 +115,10 @@ def sync_to_github(state):
         return False, str(e)
 
 def update_github_engine_file(file_path, new_content, commit_message="Leo kods caur Cockpit"):
-    """Atjaunina server.py dzinēja repozitorijā"""
+    """Atjaunina jebkuru failu dzinēja repozitorijā"""
     if not GITHUB_TOKEN:
         return False, "Trūkst GITHUB_TOKEN"
-    url = f"https://api.github.com/repos/{ENGINE_REPO}/contents/{file_path}"
+    url = f"[https://api.github.com/repos/](https://api.github.com/repos/){ENGINE_REPO}/contents/{file_path}"
     headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "AQ-App"}
     sha = None
     try:
@@ -137,7 +136,7 @@ def update_github_engine_file(file_path, new_content, commit_message="Leo kods c
     try:
         put_res = requests.put(url, headers=headers, json=payload, timeout=15)
         if put_res.status_code in [200, 201]:
-            return True, "Fails veiksmīgi atjaunināts GitHub!"
+            return True, f"Fails '{file_path}' veiksmīgi atjaunināts GitHub!"
         return False, f"GitHub kļūda: {put_res.status_code}"
     except Exception as e:
         return False, str(e)
@@ -177,7 +176,6 @@ def process_artifact_update(state, text, author="Bruno"):
     if not text or not state.get("artifacts"):
         return text
 
-    # Pārbaudām python kodu Leo gadījumā
     code_match = re.search(r"```python\s*([\s\S]*?)```", text, re.IGNORECASE)
     if code_match and len(code_match.group(1).strip()) > 50:
         target_art = state["artifacts"][1] if len(state["artifacts"]) > 1 else None
@@ -185,7 +183,6 @@ def process_artifact_update(state, text, author="Bruno"):
             target_art["code"] = code_match.group(1).strip()
             save_state_local(state)
 
-    # Pārbaudām markdown Bruno gadījumā
     doc_match = re.search(r"```markdown\s*([\s\S]*?)```", text, re.IGNORECASE)
     if not doc_match:
         doc_match = re.search(r"```(?:markdown|[a-z]+)?\s*([\s\S]*?)```", text, re.IGNORECASE)
@@ -217,17 +214,15 @@ def ask_colleague(colleague_name, recent_history):
 
     try:
         st = load_state()
-        # Bruno iedodam specifikācijas tekstu
         for art in st.get("artifacts", []):
             if art.get("id") == "doc" and art.get("code"):
                 context_thread += f"\n--- 3. PANEĻA SPECIFIKĀCIJA ---\n{art['code']}\n-----------------------------\n"
                 break
 
-        # Leo iedodam redzēt pašreizējo server.py kodu!
         if colleague_name == "Leo":
             for art in st.get("artifacts", []):
                 if art.get("id") == "code" and art.get("code"):
-                    context_thread += f"\n--- PAŠREIZĒJAIS SERVER.PY KODS (BĀZE IZMAIŅĀM) ---\n{art['code']}\n-----------------------------------------------------\n"
+                    context_thread += f"\n--- AKTĪVAIS KODS ({art.get('title', 'server.py')}) ---\n{art['code']}\n-----------------------------------------------------\n"
                     break
     except Exception:
         pass
@@ -265,9 +260,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <title>⚡ Aura Quadro OS — Cockpit</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css)">
+    <script src="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js)"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -305,6 +300,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     </header>
 
     <main class="flex-1 grid grid-cols-12 gap-4 p-4 min-h-0">
+        <!-- 1. PANELIS -->
         <section class="col-span-5 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
             <div class="px-4 py-3 border-b border-borderCol bg-slate-900/50 font-semibold text-xs text-slate-400">1. THE CORE</div>
             <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3"></div>
@@ -329,12 +325,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <span id="fileNameBadge" class="hidden text-xs text-amber-300 bg-slate-800 px-2 py-0.5 rounded flex items-center gap-1"></span>
                 </div>
                 <div class="flex gap-2">
-                    <textarea id="chatInput" rows="2" placeholder="Ieraksti domu Bruno..." class="flex-1 bg-slate-950 border border-borderCol rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500 resize-none" onkeydown="handleChatKey(event)"></textarea>
+                    <textarea id="chatInput" rows="2" placeholder="Ieraksti domu..." class="flex-1 bg-slate-950 border border-borderCol rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500 resize-none" onkeydown="handleChatKey(event)"></textarea>
                     <button id="sendBtn" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium">Sūtīt</button>
                 </div>
             </div>
         </section>
 
+        <!-- 2. PANELIS -->
         <section class="col-span-3 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
             <div class="px-4 py-3 border-b border-borderCol bg-slate-900/50 font-semibold text-xs text-slate-400">2. INTENT / UZDEVUMI</div>
             <div class="p-3 border-b border-borderCol bg-slate-900/20 space-y-2">
@@ -351,21 +348,23 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div id="taskList" class="flex-1 p-3 overflow-y-auto space-y-2"></div>
         </section>
 
+        <!-- 3. PANELIS (DINAMISKĀS CILNES) -->
         <section class="col-span-4 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
-            <div class="px-4 py-2.5 border-b border-borderCol bg-slate-900/50 flex justify-between items-center">
-                <div class="flex space-x-1 bg-slate-950 p-1 rounded-lg border border-borderCol text-xs">
-                    <button id="tabDocBtn" onclick="switchTab('doc')" class="px-2.5 py-1 rounded bg-blue-600 text-white font-medium">Specs</button>
-                    <button id="tabCodeBtn" onclick="switchTab('code')" class="px-2.5 py-1 rounded text-slate-400 hover:text-white">server.py</button>
+            <div class="px-4 py-2 border-b border-borderCol bg-slate-900/50 flex justify-between items-center">
+                <!-- Dinamiskā ciļņu josla -->
+                <div id="dynamicTabsContainer" class="flex space-x-1 overflow-x-auto max-w-[240px] py-0.5">
+                    <button class="px-2 py-0.5 text-xs rounded bg-blue-600 text-white font-medium">Ielādē...</button>
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <button id="deployEngineBtn" onclick="deployEngineCode()" class="hidden text-xs bg-amber-600 hover:bg-amber-500 text-white font-semibold px-2.5 py-1 rounded transition">🚀 Sūtīt uz GitHub</button>
-                    <button onclick="downloadArtifact()" class="text-xs bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 border border-emerald-700 px-2 py-1 rounded">📥 Lejupielādēt</button>
-                    <button onclick="copyCurrentArtifact()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-borderCol">📋 Kopēt</button>
+                    <button id="refreshRepoBtn" onclick="fetchRepoFiles()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-1 rounded border border-borderCol" title="Atsvaidzināt failus no GitHub">🔄</button>
+                    <button id="deployEngineBtn" onclick="deployEngineCode()" class="text-xs bg-amber-600 hover:bg-amber-500 text-white font-semibold px-2 py-1 rounded transition">🚀 Sūtīt uz GitHub</button>
+                    <button onclick="downloadArtifact()" class="text-xs bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 border border-emerald-700 px-2 py-1 rounded">📥</button>
+                    <button onclick="copyCurrentArtifact()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-borderCol">📋</button>
                 </div>
             </div>
-            <div class="flex items-center justify-between border-b border-slate-800 px-4 py-2">
+            <div class="flex items-center justify-between border-b border-slate-800 px-4 py-1.5 bg-slate-950/40">
                 <div class="flex items-center gap-2">
-                    <span id="artifactTitle" class="text-xs font-bold text-emerald-400">AQ_SYSTEM_SPEC.md</span>
+                    <span id="artifactTitle" class="text-xs font-bold text-emerald-400">Faila saturs</span>
                     <select id="versionSelect" onchange="rollbackVersion(this.value)" class="hidden bg-slate-950 text-slate-400 border border-slate-800 text-[10px] rounded px-1.5 py-0.5 outline-none">
                         <option value="">🕒 Vēsture...</option>
                     </select>
@@ -381,7 +380,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         let currentPin = localStorage.getItem('aq_pin') || '';
         let lastMessageCount = 0;
         let allArtifacts = [];
-        let activeTab = 'doc';
+        let currentActiveFileName = "server.py";
 
         function checkAuth() {
             if (!currentPin) {
@@ -390,6 +389,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             } else {
                 document.getElementById('pinModal').classList.add('hidden');
                 fetchState(true);
+                fetchRepoFiles();
             }
         }
 
@@ -402,12 +402,66 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 localStorage.setItem('aq_pin', currentPin);
                 document.getElementById('pinModal').classList.add('hidden');
                 fetchState(true);
+                fetchRepoFiles();
             } else {
                 document.getElementById('pinError').classList.remove('hidden');
             }
         }
 
         function logout() { localStorage.removeItem('aq_pin'); location.reload(); }
+
+        async function fetchRepoFiles() {
+            if (!currentPin) return;
+            try {
+                const res = await fetch('/api/repo/files', { headers: { 'X-AQ-PIN': currentPin } });
+                const data = await res.json();
+                if (data.files && data.files.length) {
+                    renderTabs(data.files);
+                }
+            } catch (err) {
+                console.error("Nevarēja ielādēt GitHub failus:", err);
+            }
+        }
+
+        function renderTabs(files) {
+            const container = document.getElementById('dynamicTabsContainer');
+            container.innerHTML = '';
+            files.forEach(f => {
+                const btn = document.createElement('button');
+                const isSelected = (f === currentActiveFileName);
+                btn.className = isSelected 
+                    ? 'px-2 py-0.5 text-xs rounded bg-blue-600 text-white font-medium whitespace-nowrap' 
+                    : 'px-2 py-0.5 text-xs rounded text-slate-400 hover:text-white bg-slate-900 border border-slate-800 whitespace-nowrap';
+                btn.textContent = f;
+                btn.onclick = () => selectFile(f);
+                container.appendChild(btn);
+            });
+        }
+
+        async function selectFile(fileName) {
+            currentActiveFileName = fileName;
+            fetchRepoFiles(); // Pārzīmē aktīvo pogu
+            try {
+                const res = await fetch(`/api/repo/file_content?path=${encodeURIComponent(fileName)}`, { headers: { 'X-AQ-PIN': currentPin } });
+                const data = await res.json();
+                if (data.content !== undefined) {
+                    document.getElementById('artifactTitle').innerText = fileName;
+                    const el = document.getElementById('artifactCode');
+                    el.className = fileName.endsWith('.md') ? 'language-markdown text-xs font-mono' : 'language-python text-xs font-mono';
+                    el.textContent = data.content;
+                    if (window.hljs) hljs.highlightElement(el);
+
+                    // Atjauninām arī stāvoklī aktīvo artefaktu
+                    const target = allArtifacts.find(a => a.id === 'code');
+                    if (target) {
+                        target.title = fileName;
+                        target.code = data.content;
+                    }
+                }
+            } catch (err) {
+                console.error("Kļūda ielādējot failu:", err);
+            }
+        }
 
         async function fetchState(forceScroll = false) {
             if (!currentPin) return;
@@ -423,49 +477,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 
                 if (JSON.stringify(data.artifacts) !== JSON.stringify(allArtifacts)) {
                     allArtifacts = data.artifacts || [];
-                    renderActiveArtifact();
                 }
             } catch (err) {}
         }
 
-        function switchTab(tabId) {
-            activeTab = tabId;
-            document.getElementById('tabDocBtn').className = tabId === 'doc' ? 'px-2.5 py-1 rounded bg-blue-600 text-white font-medium' : 'px-2.5 py-1 rounded text-slate-400 hover:text-white';
-            document.getElementById('tabCodeBtn').className = tabId === 'code' ? 'px-2.5 py-1 rounded bg-blue-600 text-white font-medium' : 'px-2.5 py-1 rounded text-slate-400 hover:text-white';
-            
-            const deployBtn = document.getElementById('deployEngineBtn');
-            if (tabId === 'code') {
-                deployBtn.classList.remove('hidden');
-            } else {
-                deployBtn.classList.add('hidden');
-            }
-            renderActiveArtifact();
-        }
-
-        function renderActiveArtifact() {
-            if (!allArtifacts.length) return;
-            const target = allArtifacts.find(a => a.id === activeTab) || allArtifacts[0];
-            document.getElementById('artifactTitle').innerText = target.title;
-            const el = document.getElementById('artifactCode');
-            el.className = target.lang === 'markdown' ? 'language-markdown text-xs font-mono' : 'language-python text-xs font-mono';
-            el.textContent = target.code;
-            if (window.hljs) hljs.highlightElement(el);
-
-            if (target.id === 'doc') {
-                updateArtifactHistoryUI(target);
-            } else {
-                const sel = document.getElementById('versionSelect');
-                if (sel) sel.classList.add('hidden');
-            }
-        }
-
         async function deployEngineCode() {
-            const target = allArtifacts.find(a => a.id === 'code');
-            if (!target || !target.code) {
+            const code = document.getElementById('artifactCode').textContent;
+            if (!code) {
                 alert("Nav koda, ko nosūtīt!");
                 return;
             }
-            if (!confirm("Vai tiešām nosūtīt šo server.py kodu uz GitHub repozitoriju?")) return;
+            if (!confirm(`Vai tiešām nosūtīt failu '${currentActiveFileName}' uz GitHub repozitoriju?`)) return;
             
             const btn = document.getElementById('deployEngineBtn');
             btn.disabled = true;
@@ -475,10 +497,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 const res = await fetch('/api/deploy_engine', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
-                    body: JSON.stringify({ code: target.code, message: "Leo atjauninājums no Cockpit" })
+                    body: JSON.stringify({ 
+                        file_path: currentActiveFileName,
+                        code: code, 
+                        message: `Atjauninājums [${currentActiveFileName}] caur Cockpit` 
+                    })
                 });
                 const data = await res.json();
                 alert(data.msg);
+                fetchRepoFiles();
             } catch (e) {
                 alert("Kļūda tīklā: " + e);
             } finally {
@@ -488,12 +515,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         function downloadArtifact() {
-            if (!allArtifacts.length) return;
-            const target = allArtifacts.find(a => a.id === activeTab) || allArtifacts[0];
-            const blob = new Blob([target.code], { type: 'text/plain;charset=utf-8' });
+            const code = document.getElementById('artifactCode').textContent;
+            if (!code) return;
+            const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = target.title;
+            link.download = currentActiveFileName;
             link.click();
             URL.revokeObjectURL(link.href);
         }
@@ -665,36 +692,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         checkAuth();
         setInterval(fetchState, 3500);
-
-        function updateArtifactHistoryUI(artifact) {
-            const select = document.getElementById('versionSelect');
-            if (!select) return;
-            if (!artifact.history || artifact.history.length === 0) {
-                select.classList.add('hidden');
-                return;
-            }
-            select.classList.remove('hidden');
-            let opts = '<option value="">🕒 Versiju vēsture (' + artifact.history.length + ')</option>';
-            artifact.history.slice().reverse().forEach((v, idx) => {
-                const realIndex = artifact.history.length - 1 - idx;
-                opts += `<option value="${realIndex}">${v.time} — ${v.author}</option>`;
-            });
-            select.innerHTML = opts;
-        }
-
-        async function rollbackVersion(index) {
-            if (index === '') return;
-            if (!confirm("Vai tiešām atjaunot šo specifikācijas versiju?")) {
-                document.getElementById('versionSelect').value = '';
-                return;
-            }
-            await fetch('/api/artifact/rollback', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
-                body: JSON.stringify({ index: parseInt(index) })
-            });
-            fetchState();
-        }
     </script>
 </body>
 </html>
@@ -713,6 +710,49 @@ def get_state():
     if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
     return jsonify(load_state())
 
+@app.route('/api/repo/files', methods=['GET'])
+def list_repo_files():
+    """Dinamiski nolasa failus no GitHub dzinēja repozitorija"""
+    if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
+    if not GITHUB_TOKEN:
+        return jsonify({"files": ["server.py", "AQ_SYSTEM_SPEC.md"]})
+    
+    url = f"[https://api.github.com/repos/](https://api.github.com/repos/){ENGINE_REPO}/git/trees/main?recursive=1"
+    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "AQ-App"}
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            tree = r.json().get("tree", [])
+            files = [
+                item["path"] for item in tree 
+                if item["type"] == "blob" and (item["path"].endswith(".py") or item["path"].endswith(".md") or item["path"].endswith(".json"))
+                and not item["path"].startswith(".") and not "/" in item["path"]
+            ]
+            return jsonify({"files": sorted(files)})
+    except Exception as e:
+        print(f"Repo failu kļūda: {e}")
+    return jsonify({"files": ["server.py", "AQ_SYSTEM_SPEC.md"]})
+
+@app.route('/api/repo/file_content', methods=['GET'])
+def get_file_content():
+    """Nolasa konkrēta faila saturu no GitHub"""
+    if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
+    file_path = request.args.get("path", "server.py")
+    if not GITHUB_TOKEN:
+        return jsonify({"content": "# Trūkst GITHUB_TOKEN"})
+
+    url = f"[https://api.github.com/repos/](https://api.github.com/repos/){ENGINE_REPO}/contents/{file_path}"
+    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "AQ-App"}
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            content_b64 = r.json().get("content", "")
+            decoded = base64.b64decode(content_b64).decode("utf-8")
+            return jsonify({"content": decoded, "path": file_path})
+    except Exception as e:
+        print(f"Faila satura kļūda: {e}")
+    return jsonify({"content": f"# Nevarēja ielādēt {file_path}"})
+
 @app.route('/api/sync', methods=['POST'])
 def manual_sync():
     if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
@@ -724,12 +764,13 @@ def manual_sync():
 def deploy_engine():
     if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
     data = request.json or {}
+    file_path = data.get("file_path", "server.py")
     new_code = data.get("code")
-    commit_msg = data.get("message", "Leo atjauninājums caur Cockpit")
+    commit_msg = data.get("message", f"Atjauninājums [{file_path}] no Cockpit")
     if not new_code:
-        return jsonify({"status": "error", "msg": "Kods ir tukšs!"}), 400
+        return jsonify({"status": "error", "msg": "Saturs ir tukšs!"}), 400
     
-    success, msg = update_github_engine_file("server.py", new_code, commit_msg)
+    success, msg = update_github_engine_file(file_path, new_code, commit_msg)
     return jsonify({"status": "ok" if success else "error", "msg": msg})
 
 @app.route('/api/message', methods=['POST'])
@@ -757,28 +798,6 @@ def add_message():
 
     trigger_background_sync()
     return jsonify({"status": "ok"})
-
-@app.route('/api/artifact/rollback', methods=['POST'])
-def rollback_artifact():
-    if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
-    state = load_state()
-    data = request.json or {}
-    history_index = data.get("index")
-    
-    for art in state.get("artifacts", []):
-        if art.get("id") == "doc" and "history" in art and 0 <= history_index < len(art["history"]):
-            restored = art["history"].pop(history_index)
-            art["history"].append({
-                "time": datetime.now().strftime("%d.%m %H:%M"),
-                "author": "Rollback",
-                "code": art["code"]
-            })
-            art["code"] = restored["code"]
-            save_state_local(state)
-            trigger_background_sync()
-            return jsonify({"status": "ok"})
-            
-    return jsonify({"error": "Version not found"}), 404
 
 @app.route('/api/colleague_turn', methods=['POST'])
 def colleague_turn():
