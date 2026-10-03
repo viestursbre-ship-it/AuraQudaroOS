@@ -377,8 +377,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div style="padding:6px 12px; border-bottom:1px solid #1e293b; background:rgba(7,10,18,0.4); display:flex; justify-content:space-between; align-items:center;">
                 <span id="artifactTitle" style="font-size:11px; font-weight:bold; color:#34d399;">server.py</span>
             </div>
-            <div style="flex:1; padding:10px; overflow:auto; background:rgba(7,10,18,0.5);">
-                <pre style="margin:0;"><code id="artifactCode" style="font-size:11px; font-family:monospace;"></code></pre>
+            <div style="flex:1; padding:10px; display:flex; background:rgba(7,10,18,0.6);">
+                <textarea id="artifactCode" spellcheck="false" placeholder="Faila saturs..." style="width:100%; height:100%; background:transparent; color:#e2e8f0; font-family:Consolas, Monaco, monospace; font-size:11px; line-height:1.5; border:none; resize:none; outline:none; white-space:pre; tab-size:4;"></textarea>
             </div>
         </section>
     </main>
