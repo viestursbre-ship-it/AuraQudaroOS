@@ -118,25 +118,36 @@ def update_github_engine_file(file_path, new_content, commit_message="Leo kods c
     """Atjaunina jebkuru failu dzinēja repozitorijā"""
     if not GITHUB_TOKEN:
         return False, "Trūkst GITHUB_TOKEN"
-    url = f"[https://api.github.com/repos/](https://api.github.com/repos/){ENGINE_REPO}/contents/{file_path}"
-    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "AQ-App"}
+    
+    # Pārliecinies, ka šeit nav nekādu lieku figūriekavu:
+    clean_repo = ENGINE_REPO.strip("{} ")
+    clean_path = file_path.strip("{} ")
+    url = f"https://api.github.com/repos/{clean_repo}/contents/{clean_path}"
+    
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "AQ-App"
+    }
     sha = None
     try:
         r = requests.get(url, headers=headers, timeout=10)
         if r.status_code == 200:
             sha = r.json().get("sha")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"SHA iegūšanas kļūda: {e}")
+        
     payload = {
         "message": commit_message,
         "content": base64.b64encode(new_content.encode('utf-8')).decode('utf-8')
     }
     if sha:
         payload["sha"] = sha
+        
     try:
         put_res = requests.put(url, headers=headers, json=payload, timeout=15)
         if put_res.status_code in [200, 201]:
-            return True, f"Fails '{file_path}' veiksmīgi atjaunināts GitHub!"
+            return True, f"Fails '{clean_path}' veiksmīgi saglabāts GitHub!"
         return False, f"GitHub kļūda: {put_res.status_code}"
     except Exception as e:
         return False, str(e)
