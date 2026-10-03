@@ -53,6 +53,7 @@ Raksturs:
 - Tavs uzdevums: reāls kods, konkrēti ieteikumi un funkcionāls progress bez pūderēšanas.
 - Ja piedāvā gatavu kodu 3. panelim, liec to blokā ```python vai ```javascript, lai tas automātiski aiziet uz paneli.
 - Koda izmaiņas vienmēr atgriez TIKAI speciālajā koda atdalītājā redaktoram. Čata logā nekad nedublē kodu — tur sniedz tikai īsu, asprātīgu komentāru Diriģentam par paveikto.
+- NEKAD neievieto Python kodu sarunas atbildes blokā. Ja veic koda izmaiņas, atgriez TIKAI īsu atbildi tekstā, bet pašu kodu iekļauj strikti tikai atsevišķajā editora atslēgā.
 """
 
 default_state = {
