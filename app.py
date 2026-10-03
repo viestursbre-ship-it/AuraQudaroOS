@@ -173,36 +173,41 @@ def trigger_background_sync():
     sync_timer.start()
 
 def process_artifact_update(state, text, author="Bruno"):
-    if not text or not state.get("artifacts"):
+    if not text:
         return text
 
+    clean_chat_text = text
+
+    # 1. Pārbaudām Python kodu Leo atbildēs
     code_match = re.search(r"```python\s*([\s\S]*?)```", text, re.IGNORECASE)
-    if code_match and len(code_match.group(1).strip()) > 50:
-        target_art = state["artifacts"][1] if len(state["artifacts"]) > 1 else None
-        if target_art:
-            target_art["code"] = code_match.group(1).strip()
-            save_state_local(state)
+    if code_match and len(code_match.group(1).strip()) > 40:
+        clean_chat_text = re.sub(r"```python\s*[\s\S]*?```", "\n*[⚡ Kods pārvietots uz 3. paneli]*", clean_chat_text, flags=re.IGNORECASE)
+        for art in state.get("artifacts", []):
+            if art.get("id") == "code":
+                art["code"] = code_match.group(1).strip()
+                save_state_local(state)
+                break
 
-    doc_match = re.search(r"```markdown\s*([\s\S]*?)```", text, re.IGNORECASE)
-    if not doc_match:
-        doc_match = re.search(r"```(?:markdown|[a-z]+)?\s*([\s\S]*?)```", text, re.IGNORECASE)
+    # 2. Pārbaudām Bruno Markdown specifikāciju (gan ar blokiem, gan ja sākas ar #)
+    doc_match = re.search(r"```markdown\s*([\s\S]*?)(?:```|$)", text, re.IGNORECASE)
+    if not doc_match and text.strip().startswith("#"):
+        # Ja Bruno vispār neielika ``` bet sāka tieši ar virsrakstu
+        doc_code = text.strip()
+        clean_chat_text = "*[🏛️ Bruno atjaunoja AQ_SYSTEM_SPEC.md 3. panelī]*"
+    elif doc_match and len(doc_match.group(1).strip()) > 40:
+        doc_code = doc_match.group(1).strip()
+        clean_chat_text = re.sub(r"```markdown\s*[\s\S]*?(?:```|$)", "\n*[🏛️ Bruno atjaunoja AQ_SYSTEM_SPEC.md 3. panelī]*", clean_chat_text, flags=re.IGNORECASE)
+    else:
+        doc_code = None
 
-    if doc_match and len(doc_match.group(1).strip()) > 50:
-        target_art = state["artifacts"][0]
-        new_code = doc_match.group(1).strip()
-        if "history" not in target_art:
-            target_art["history"] = []
-        if target_art.get("code") and target_art["code"].strip() != new_code:
-            target_art["history"].append({
-                "time": datetime.now().strftime("%d.%m %H:%M"),
-                "author": author,
-                "code": target_art["code"]
-            })
-            target_art["history"] = target_art["history"][-15:]
-        target_art["code"] = new_code
-        save_state_local(state)
+    if doc_code:
+        for art in state.get("artifacts", []):
+            if art.get("id") == "doc":
+                art["code"] = doc_code
+                save_state_local(state)
+                break
 
-    return text
+    return clean_chat_text.strip()
 
 def ask_colleague(colleague_name, recent_history):
     if not client:
