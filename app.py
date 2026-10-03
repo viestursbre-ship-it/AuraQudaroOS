@@ -14,7 +14,7 @@ DATA_FILE = "state.json"
 
 ACCESS_PIN = os.environ.get("ACCESS_PIN", "7788")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
-GITHUB_REPO = os.environ.get("GITHUB_REPO", "viestursbre-ship-it/AuraQudaroOS")
+GITHUB_REPO = os.environ.get("GITHUB_REPO", "viestursbre-ship-it/AuraQuadroOS")
 ENGINE_REPO = os.environ.get("ENGINE_REPO", "viestursbre-ship-it/AuraQuadroOS")
 
 client = None
