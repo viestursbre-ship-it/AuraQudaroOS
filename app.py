@@ -663,22 +663,37 @@ def list_repo_files():
 
 @app.route('/api/repo/file_content', methods=['GET'])
 def get_file_content():
-    """Nolasa konkrēta faila saturu no GitHub"""
-    if not verify_auth(): return jsonify({"error": "Unauthorized"}), 401
+    """Nolasa konkrēta faila saturu no GitHub vai lokālā stāvokļa"""
+    if not verify_auth(): 
+        return jsonify({"error": "Unauthorized"}), 401
+        
     file_path = request.args.get("path", "server.py")
-    if not GITHUB_TOKEN:
-        return jsonify({"content": "# Trūkst GITHUB_TOKEN"})
+    
+    # 1. Mēģinām paņemt pa tiešo no GitHub
+    if GITHUB_TOKEN:
+        url = f"https://api.github.com/repos/{ENGINE_REPO}/contents/{file_path}?ref=main"
+        headers = {
+            "Authorization": f"Bearer {GITHUB_TOKEN}",
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "AQ-App"
+        }
+        try:
+            r = requests.get(url, headers=headers, timeout=10)
+            if r.status_code == 200:
+                raw_b64 = r.json().get("content", "")
+                # Iztīrām visas jaunās rindas un atstarpes pirms atkodēšanas
+                clean_b64 = re.sub(r'\s+', '', raw_b64)
+                decoded = base64.b64decode(clean_b64).decode("utf-8")
+                return jsonify({"content": decoded, "path": file_path})
+        except Exception as e:
+            print(f"GitHub nolasīšanas kļūda failam {file_path}: {e}")
 
-    url = f"[https://api.github.com/repos/](https://api.github.com/repos/){ENGINE_REPO}/contents/{file_path}"
-    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "AQ-App"}
-    try:
-        r = requests.get(url, headers=headers, timeout=10)
-        if r.status_code == 200:
-            content_b64 = r.json().get("content", "")
-            decoded = base64.b64decode(content_b64).decode("utf-8")
-            return jsonify({"content": decoded, "path": file_path})
-    except Exception as e:
-        print(f"Faila satura kļūda: {e}")
+    # 2. Rezerves variants (fallback): paņemam no lokālā state.json artefaktiem
+    state = load_state()
+    for art in state.get("artifacts", []):
+        if art.get("title") == file_path or (file_path == "server.py" and art.get("id") == "code") or (file_path == "AQ_SYSTEM_SPEC.md" and art.get("id") == "doc"):
+            return jsonify({"content": art.get("code", ""), "path": file_path})
+
     return jsonify({"content": f"# Nevarēja ielādēt {file_path}"})
 
 @app.route('/api/sync', methods=['POST'])
