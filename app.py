@@ -256,122 +256,129 @@ def ask_colleague(colleague_name, recent_history):
         return f"[{colleague_name} kļūda: {e}]"
 
 HTML_TEMPLATE = """<!DOCTYPE html>
-<html lang="lv" class="dark">
+<html lang="lv">
 <head>
     <meta charset="UTF-8">
     <title>⚡ Aura Quadro OS — Cockpit</title>
-    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css)">
-    <script src="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js)"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: { darkBg: '#0b0f17', panelBg: '#131b2e', borderCol: '#1e293b' }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0b0f17; color: #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        header { background: #131b2e; border-bottom: 1px solid #1e293b; padding: 10px 20px; display: flex; justify-content: space-between; items: center; }
+        main { flex: 1; display: grid; grid-template-columns: 5fr 3fr 4fr; gap: 14px; padding: 14px; min-height: 0; }
+        .panel { background: #131b2e; border: 1px solid #1e293b; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; }
+        .panel-header { padding: 10px 14px; border-bottom: 1px solid #1e293b; background: rgba(15,23,42,0.5); font-size: 11px; font-weight: bold; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; }
+        .chat-box { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .chat-msg { background: rgba(15,23,42,0.7); border: 1px solid #1e293b; border-radius: 8px; padding: 10px; font-size: 12px; }
+        .chat-input-area { padding: 12px; border-top: 1px solid #1e293b; background: rgba(15,23,42,0.3); }
+        textarea, input[type="text"] { background: #070a12; border: 1px solid #1e293b; border-radius: 6px; color: #fff; padding: 8px; font-size: 12px; outline: none; }
+        textarea:focus, input[type="text"]:focus { border-color: #3b82f6; }
+        select { background: #070a12; border: 1px solid #1e293b; border-radius: 4px; color: #cbd5e1; font-size: 11px; padding: 4px 6px; outline: none; }
+        .btn { border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; padding: 6px 12px; transition: 0.2s; }
+        .btn-blue { background: #2563eb; color: #fff; }
+        .btn-blue:hover { background: #1d4ed8; }
+        .btn-emerald { background: #059669; color: #fff; }
+        .btn-amber { background: #d97706; color: #fff; }
+        .btn-slate { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; }
+        .btn-slate:hover { background: #334155; color: #fff; }
+        .tabs-row { display: flex; gap: 4px; overflow-x: auto; max-width: 250px; }
+        .tab-btn { background: #070a12; border: 1px solid #1e293b; color: #94a3b8; font-size: 10px; padding: 4px 8px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+        .tab-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; font-weight: bold; }
+        #pinModal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; }
+        .modal-box { background: #131b2e; border: 1px solid #1e293b; border-radius: 12px; padding: 24px; width: 280px; text-align: center; }
+        .hidden { display: none !important; }
+    </style>
 </head>
-<body class="bg-darkBg text-slate-200 h-screen flex flex-col font-sans overflow-hidden">
-    <div id="pinModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-        <div class="bg-panelBg border border-borderCol p-6 rounded-xl shadow-2xl max-w-xs w-full text-center">
-            <div class="text-3xl mb-2">⚡</div>
-            <h2 class="text-base font-bold text-white mb-1">AURA QUADRO OS</h2>
-            <p class="text-xs text-slate-400 mb-4">Ievadiet piekļuves PIN</p>
-            <input type="password" id="pinInput" maxlength="8" placeholder="••••" class="w-full text-center tracking-widest text-lg bg-slate-950 border border-borderCol rounded-lg px-3 py-2 text-white mb-3 outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') submitPin()">
-            <button onclick="submitPin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg text-xs font-semibold transition">Ieiet</button>
-            <p id="pinError" class="text-xs text-rose-400 mt-2 hidden">Nepareizs PIN!</p>
+<body>
+    <div id="pinModal" class="hidden">
+        <div class="modal-box">
+            <div style="font-size:28px; margin-bottom:8px;">⚡</div>
+            <h2 style="font-size:14px; font-weight:bold; color:#fff; margin-bottom:4px;">AURA QUADRO OS</h2>
+            <p style="font-size:11px; color:#94a3b8; margin-bottom:14px;">Ievadiet piekļuves PIN</p>
+            <input type="password" id="pinInput" maxlength="8" placeholder="••••" style="width:100%; text-align:center; letter-spacing:4px; font-size:16px; margin-bottom:12px;" onkeydown="if(event.key==='Enter') submitPin()">
+            <button onclick="submitPin()" class="btn btn-blue" style="width:100%; padding:8px 0;">Ieiet</button>
+            <p id="pinError" style="font-size:11px; color:#f87171; margin-top:8px;" class="hidden">Nepareizs PIN!</p>
         </div>
     </div>
 
-    <header class="bg-panelBg border-b border-borderCol px-6 py-3 flex justify-between items-center select-none">
-        <div class="flex items-center space-x-3">
-            <span class="text-xl">⚡</span>
-            <h1 class="text-base font-bold tracking-wide text-white">AURA QUADRO <span class="text-xs font-normal text-slate-400">| Cockpit</span></h1>
+    <header>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">⚡</span>
+            <span style="font-weight:bold; color:#fff; font-size:13px;">AURA QUADRO <span style="font-weight:normal; color:#64748b;">| Cockpit</span></span>
         </div>
-        <div class="flex items-center space-x-3 text-xs">
-            <span class="text-[11px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-2 py-0.5 rounded-full hidden sm:inline">⚡ Instant-Sync Aktīvs</span>
-            <button id="saveGhBtn" onclick="saveToGitHub()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-borderCol px-2.5 py-1 rounded transition flex items-center gap-1.5">💾 Arhīvs</button>
-            <span class="px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-400 border border-blue-800">● Viesturs, Marija, Bruno, Leo, CZO Kvarks 🐾</span>
-            <button onclick="logout()" class="text-slate-500 hover:text-rose-400 text-[11px]">Iziet 🔒</button>
+        <div style="display:flex; align-items:center; gap:10px; font-size:11px;">
+            <span style="color:#34d399; background:rgba(6,78,59,0.5); border:1px solid #065f46; padding:2px 8px; border-radius:12px;">⚡ Instant-Sync Aktīvs</span>
+            <button onclick="saveToGitHub()" class="btn btn-slate">💾 Arhīvs</button>
+            <span style="background:#172554; color:#60a5fa; border:1px solid #1e40af; padding:2px 8px; border-radius:12px;">● Viesturs, Marija, Bruno, Leo, CZO Kvarks 🐾</span>
+            <button onclick="logout()" style="background:none; border:none; color:#64748b; cursor:pointer;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#64748b'">Iziet 🔒</button>
         </div>
     </header>
 
-    <main class="flex-1 grid grid-cols-12 gap-4 p-4 min-h-0">
-        <!-- 1. PANELIS -->
-        <section class="col-span-5 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
-            <div class="px-4 py-3 border-b border-borderCol bg-slate-900/50 font-semibold text-xs text-slate-400">1. THE CORE</div>
-            <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3"></div>
-            <div id="leoTriggerBar" class="px-4 py-2 bg-amber-950/30 border-t border-amber-900/40 flex justify-between items-center hidden">
-                <span class="text-xs text-amber-300">💡 Bruno arhitektūra gatava.</span>
-                <button onclick="callLeo()" id="leoCallBtn" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">⚡ Komentēt Leo</button>
+    <main>
+        <!-- 1. THE CORE -->
+        <section class="panel">
+            <div class="panel-header">1. THE CORE</div>
+            <div id="chatMessages" class="chat-box"></div>
+            <div id="leoTriggerBar" style="padding:6px 12px; background:rgba(69,26,3,0.4); border-top:1px solid #78350f; display:flex; justify-content:space-between; align-items:center;" class="hidden">
+                <span style="font-size:11px; color:#fcd34d;">💡 Bruno arhitektūra gatava.</span>
+                <button onclick="callLeo()" id="leoCallBtn" class="btn btn-amber">⚡ Komentēt Leo</button>
             </div>
-            <div class="p-3 border-t border-borderCol bg-slate-900/30">
-                <div class="flex gap-2 mb-2 items-center text-xs">
-                    <span class="text-slate-400">Autors:</span>
-                    <select id="authorSelect" class="bg-slate-950 text-slate-200 border border-borderCol rounded px-2 py-1 outline-none">
+            <div class="chat-input-area">
+                <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                    <span style="font-size:11px; color:#64748b;">Autors:</span>
+                    <select id="authorSelect">
                         <option value="Viesturs">👤 Viesturs</option>
                         <option value="Marija">🌸 Marija</option>
                     </select>
-                    <span class="text-slate-400 ml-2">Kam:</span>
-                    <select id="respondentSelect" class="bg-slate-950 text-amber-300 border border-borderCol rounded px-2 py-1 outline-none">
+                    <span style="font-size:11px; color:#64748b; margin-left:4px;">Kam:</span>
+                    <select id="respondentSelect">
                         <option value="Bruno">🏛️ Bruno</option>
                         <option value="Leo">⚡ Leo</option>
                     </select>
-                    <input type="file" id="fileAttachment" class="hidden" accept="image/*,.txt,.json,.py,.md" onchange="handleFileSelect(this)">
-                    <button type="button" onclick="document.getElementById('fileAttachment').click()" class="ml-2 text-slate-400 hover:text-amber-400 text-base" title="Pievienot failu vai attēlu">📎</button>
-                    <span id="fileNameBadge" class="hidden text-xs text-amber-300 bg-slate-800 px-2 py-0.5 rounded flex items-center gap-1"></span>
                 </div>
-                <div class="flex gap-2">
-                    <textarea id="chatInput" rows="2" placeholder="Ieraksti domu..." class="flex-1 bg-slate-950 border border-borderCol rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500 resize-none" onkeydown="handleChatKey(event)"></textarea>
-                    <button id="sendBtn" onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium">Sūtīt</button>
+                <div style="display:flex; gap:6px;">
+                    <textarea id="chatInput" rows="2" placeholder="Ieraksti domu..." style="flex:1; resize:none;" onkeydown="handleChatKey(event)"></textarea>
+                    <button id="sendBtn" onclick="sendChatMessage()" class="btn btn-blue" style="padding:0 16px;">Sūtīt</button>
                 </div>
             </div>
         </section>
 
-        <!-- 2. PANELIS -->
-        <section class="col-span-3 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
-            <div class="px-4 py-3 border-b border-borderCol bg-slate-900/50 font-semibold text-xs text-slate-400">2. INTENT / UZDEVUMI</div>
-            <div class="p-3 border-b border-borderCol bg-slate-900/20 space-y-2">
-                <input type="text" id="newTaskTitle" placeholder="+ Jauns uzdevums..." class="w-full bg-slate-950 border border-borderCol rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" onkeydown="if(event.key==='Enter') createTask()">
-                <div class="flex justify-between items-center text-[11px]">
-                    <select id="taskAssignee" class="bg-slate-950 text-slate-200 border border-borderCol rounded px-1.5 py-0.5">
+        <!-- 2. INTENT / UZDEVUMI -->
+        <section class="panel">
+            <div class="panel-header">2. INTENT / UZDEVUMI</div>
+            <div style="padding:10px; border-bottom:1px solid #1e293b; display:flex; flex-direction:column; gap:8px;">
+                <input type="text" id="newTaskTitle" placeholder="+ Jauns uzdevums..." onkeydown="if(event.key==='Enter') createTask()">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <select id="taskAssignee">
                         <option value="Bruno">Bruno (Arhitekts)</option>
                         <option value="Leo">Leo (Inženieris)</option>
                         <option value="Viesturs">Viesturs</option>
                     </select>
-                    <button onclick="createTask()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-0.5 rounded">Pievienot</button>
+                    <button onclick="createTask()" class="btn btn-emerald" style="padding:3px 10px;">Pievienot</button>
                 </div>
             </div>
-            <div id="taskList" class="flex-1 p-3 overflow-y-auto space-y-2"></div>
+            <div id="taskList" style="flex:1; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
         </section>
 
-        <!-- 3. PANELIS (DINAMISKĀS CILNES) -->
-        <section class="col-span-4 bg-panelBg border border-borderCol rounded-xl flex flex-col overflow-hidden shadow-lg">
-            <div class="px-4 py-2 border-b border-borderCol bg-slate-900/50 flex justify-between items-center">
-                <!-- Dinamiskā ciļņu josla -->
-                <div id="dynamicTabsContainer" class="flex space-x-1 overflow-x-auto max-w-[240px] py-0.5">
-                    <button class="px-2 py-0.5 text-xs rounded bg-blue-600 text-white font-medium">Ielādē...</button>
+        <!-- 3. PANEĻA DINAMISKĀS CILNES -->
+        <section class="panel">
+            <div class="panel-header">
+                <div id="dynamicTabsContainer" class="tabs-row">
+                    <button class="tab-btn active">server.py</button>
                 </div>
-                <div class="flex items-center gap-1.5">
-                    <button id="refreshRepoBtn" onclick="fetchRepoFiles()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-1 rounded border border-borderCol" title="Atsvaidzināt failus no GitHub">🔄</button>
-                    <button id="deployEngineBtn" onclick="deployEngineCode()" class="text-xs bg-amber-600 hover:bg-amber-500 text-white font-semibold px-2 py-1 rounded transition">🚀 Sūtīt uz GitHub</button>
-                    <button onclick="downloadArtifact()" class="text-xs bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 border border-emerald-700 px-2 py-1 rounded">📥</button>
-                    <button onclick="copyCurrentArtifact()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-borderCol">📋</button>
-                </div>
-            </div>
-            <div class="flex items-center justify-between border-b border-slate-800 px-4 py-1.5 bg-slate-950/40">
-                <div class="flex items-center gap-2">
-                    <span id="artifactTitle" class="text-xs font-bold text-emerald-400">Faila saturs</span>
-                    <select id="versionSelect" onchange="rollbackVersion(this.value)" class="hidden bg-slate-950 text-slate-400 border border-slate-800 text-[10px] rounded px-1.5 py-0.5 outline-none">
-                        <option value="">🕒 Vēsture...</option>
-                    </select>
+                <div style="display:flex; gap:4px; align-items:center;">
+                    <button onclick="fetchRepoFiles()" class="btn btn-slate" style="padding:3px 6px;" title="Atsvaidzināt">🔄</button>
+                    <button id="deployEngineBtn" onclick="deployEngineCode()" class="btn btn-amber" style="padding:3px 8px;">🚀 Sūtīt</button>
+                    <button onclick="downloadArtifact()" class="btn btn-slate" style="padding:3px 6px;">📥</button>
+                    <button onclick="copyCurrentArtifact()" class="btn btn-slate" style="padding:3px 6px;">📋</button>
                 </div>
             </div>
-            <div class="flex-1 p-3 overflow-auto bg-slate-950/50">
-                <pre class="m-0"><code id="artifactCode" class="text-xs font-mono"></code></pre>
+            <div style="padding:6px 12px; border-bottom:1px solid #1e293b; background:rgba(7,10,18,0.4); display:flex; justify-content:space-between; align-items:center;">
+                <span id="artifactTitle" style="font-size:11px; font-weight:bold; color:#34d399;">server.py</span>
+            </div>
+            <div style="flex:1; padding:10px; overflow:auto; background:rgba(7,10,18,0.5);">
+                <pre style="margin:0;"><code id="artifactCode" style="font-size:11px; font-family:monospace;"></code></pre>
             </div>
         </section>
     </main>
@@ -379,7 +386,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <script>
         let currentPin = localStorage.getItem('aq_pin') || '';
         let lastMessageCount = 0;
-        let allArtifacts = [];
         let currentActiveFileName = "server.py";
 
         function checkAuth() {
@@ -418,9 +424,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 if (data.files && data.files.length) {
                     renderTabs(data.files);
                 }
-            } catch (err) {
-                console.error("Nevarēja ielādēt GitHub failus:", err);
-            }
+            } catch (err) {}
         }
 
         function renderTabs(files) {
@@ -428,10 +432,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             container.innerHTML = '';
             files.forEach(f => {
                 const btn = document.createElement('button');
-                const isSelected = (f === currentActiveFileName);
-                btn.className = isSelected 
-                    ? 'px-2 py-0.5 text-xs rounded bg-blue-600 text-white font-medium whitespace-nowrap' 
-                    : 'px-2 py-0.5 text-xs rounded text-slate-400 hover:text-white bg-slate-900 border border-slate-800 whitespace-nowrap';
+                btn.className = (f === currentActiveFileName) ? 'tab-btn active' : 'tab-btn';
                 btn.textContent = f;
                 btn.onclick = () => selectFile(f);
                 container.appendChild(btn);
@@ -440,27 +441,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         async function selectFile(fileName) {
             currentActiveFileName = fileName;
-            fetchRepoFiles(); // Pārzīmē aktīvo pogu
+            fetchRepoFiles();
             try {
                 const res = await fetch(`/api/repo/file_content?path=${encodeURIComponent(fileName)}`, { headers: { 'X-AQ-PIN': currentPin } });
                 const data = await res.json();
                 if (data.content !== undefined) {
                     document.getElementById('artifactTitle').innerText = fileName;
                     const el = document.getElementById('artifactCode');
-                    el.className = fileName.endsWith('.md') ? 'language-markdown text-xs font-mono' : 'language-python text-xs font-mono';
                     el.textContent = data.content;
                     if (window.hljs) hljs.highlightElement(el);
-
-                    // Atjauninām arī stāvoklī aktīvo artefaktu
-                    const target = allArtifacts.find(a => a.id === 'code');
-                    if (target) {
-                        target.title = fileName;
-                        target.code = data.content;
-                    }
                 }
-            } catch (err) {
-                console.error("Kļūda ielādējot failu:", err);
-            }
+            } catch (err) {}
         }
 
         async function fetchState(forceScroll = false) {
@@ -474,43 +465,32 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     lastMessageCount = data.messages.length;
                 }
                 renderTasks(data.tasks);
-                
-                if (JSON.stringify(data.artifacts) !== JSON.stringify(allArtifacts)) {
-                    allArtifacts = data.artifacts || [];
-                }
             } catch (err) {}
         }
 
         async function deployEngineCode() {
             const code = document.getElementById('artifactCode').textContent;
-            if (!code) {
-                alert("Nav koda, ko nosūtīt!");
-                return;
-            }
-            if (!confirm(`Vai tiešām nosūtīt failu '${currentActiveFileName}' uz GitHub repozitoriju?`)) return;
+            if (!code) { alert("Nav koda, ko nosūtīt!"); return; }
+            if (!confirm(`Sūtīt '${currentActiveFileName}' uz GitHub?`)) return;
             
             const btn = document.getElementById('deployEngineBtn');
             btn.disabled = true;
-            btn.innerText = "⏳ Sūta...";
+            btn.innerText = "⏳";
 
             try {
                 const res = await fetch('/api/deploy_engine', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
-                    body: JSON.stringify({ 
-                        file_path: currentActiveFileName,
-                        code: code, 
-                        message: `Atjauninājums [${currentActiveFileName}] caur Cockpit` 
-                    })
+                    body: JSON.stringify({ file_path: currentActiveFileName, code: code })
                 });
                 const data = await res.json();
                 alert(data.msg);
                 fetchRepoFiles();
             } catch (e) {
-                alert("Kļūda tīklā: " + e);
+                alert("Kļūda: " + e);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "🚀 Sūtīt uz GitHub";
+                btn.innerText = "🚀 Sūtīt";
             }
         }
 
@@ -525,49 +505,38 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             URL.revokeObjectURL(link.href);
         }
 
+        function copyCurrentArtifact() {
+            navigator.clipboard.writeText(document.getElementById('artifactCode').innerText);
+            alert("Nokopēts!");
+        }
+
         function renderChat(messages, forceScroll = false) {
             const box = document.getElementById('chatMessages');
-            const colors = { 'Viesturs': 'text-blue-400', 'Marija': 'text-pink-400', 'Bruno': 'text-amber-400', 'Leo': 'text-emerald-400' };
-            box.innerHTML = messages.map(m => {
-                let attachHtml = '';
-                if (m.attachment) {
-                    if (m.attachment.type && m.attachment.type.startsWith('image/')) {
-                        attachHtml = `<div class="mt-2"><img src="${m.attachment.data}" class="max-h-56 rounded border border-slate-700 shadow-md" alt="${m.attachment.name}"></div>`;
-                    } else {
-                        attachHtml = `<div class="mt-2 text-xs text-amber-300 bg-slate-950 border border-slate-800 rounded px-2 py-1 inline-flex items-center gap-1">📄 ${m.attachment.name}</div>`;
-                    }
-                }
-                return `
-                <div class="p-2.5 rounded-lg text-xs bg-slate-900/70 border border-slate-800">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold ${colors[m.sender] || 'text-slate-300'}">${m.sender}</span>
-                        <span class="text-[10px] text-slate-500">${m.time}</span>
+            const colors = { 'Viesturs': '#60a5fa', 'Marija': '#f472b6', 'Bruno': '#fbbf24', 'Leo': '#34d399' };
+            box.innerHTML = messages.map(m => `
+                <div class="chat-msg">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="font-weight:bold; color:${colors[m.sender] || '#cbd5e1'}">${m.sender}</span>
+                        <span style="font-size:10px; color:#64748b">${m.time}</span>
                     </div>
-                    <div class="text-slate-200 whitespace-pre-wrap">${m.text}</div>
-                    ${attachHtml}
+                    <div style="color:#e2e8f0; white-space:pre-wrap;">${m.text}</div>
                 </div>
-                `;
-            }).join('');
+            `).join('');
             if (forceScroll) box.scrollTop = box.scrollHeight;
         }
 
         function renderTasks(tasks) {
             const box = document.getElementById('taskList');
-            if (!tasks || !tasks.length) { box.innerHTML = '<div class="text-xs text-slate-500 italic p-2 text-center">Nav uzdevumu.</div>'; return; }
-            const statusBadges = {
-                'Todo': 'bg-slate-800 text-slate-300 border-slate-700',
-                'In Progress': 'bg-amber-950 text-amber-300 border-amber-800',
-                'Done': 'bg-emerald-950 text-emerald-300 border-emerald-800'
-            };
+            if (!tasks || !tasks.length) { box.innerHTML = '<div style="font-size:11px; color:#64748b; text-align:center;">Nav uzdevumu.</div>'; return; }
             box.innerHTML = tasks.map(t => `
-                <div class="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs flex flex-col gap-1.5">
-                    <div class="flex justify-between items-start gap-2">
-                        <span class="text-slate-200">${t.title}</span>
-                        <button onclick="deleteTask(${t.id})" class="text-slate-600 hover:text-rose-400">✕</button>
+                <div style="background:rgba(15,23,42,0.8); border:1px solid #1e293b; border-radius:6px; padding:8px; font-size:11px;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>${t.title}</span>
+                        <button onclick="deleteTask(${t.id})" style="background:none; border:none; color:#64748b; cursor:pointer;">✕</button>
                     </div>
-                    <div class="flex justify-between items-center text-[10px] pt-1 border-t border-slate-800/60">
-                        <span class="text-slate-400">👤 ${t.assignee || 'Komanda'}</span>
-                        <button onclick="cycleTaskStatus(${t.id}, '${t.status}')" class="px-2 py-0.5 rounded-full border ${statusBadges[t.status] || statusBadges['Todo']}">${t.status} ↻</button>
+                    <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:10px;">
+                        <span style="color:#94a3b8">👤 ${t.assignee || 'Komanda'}</span>
+                        <button onclick="cycleTaskStatus(${t.id}, '${t.status}')" class="btn btn-slate" style="padding:1px 6px;">${t.status}</button>
                     </div>
                 </div>
             `).join('');
@@ -593,72 +562,36 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             fetchState();
         }
 
-        let attachedFile = null;
-
-        function handleFileSelect(input) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                attachedFile = {
-                    name: file.name,
-                    type: file.type,
-                    data: e.target.result
-                };
-                const badge = document.getElementById('fileNameBadge');
-                badge.innerHTML = `<span class="truncate max-w-[150px]">📎 ${file.name}</span><button type="button" onclick="clearAttachment(event)" class="text-rose-400 hover:text-rose-300 font-bold ml-2 text-sm">✕</button>`;
-                badge.classList.remove('hidden');
-                badge.classList.add('inline-flex');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function clearAttachment(e) {
-            if (e) e.stopPropagation();
-            attachedFile = null;
-            const fileInput = document.getElementById('fileAttachment');
-            if (fileInput) fileInput.value = '';
-            const badge = document.getElementById('fileNameBadge');
-            if (badge) badge.classList.add('hidden');
-        }
-
         function handleChatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }
 
         async function sendChatMessage() {
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
-            if (!text && !attachedFile) return;
+            if (!text) return;
             const author = document.getElementById('authorSelect').value;
             const respondent = document.getElementById('respondentSelect').value;
-            const fileToSend = attachedFile;
-            
             input.value = '';
-            clearAttachment();
             document.getElementById('leoTriggerBar').classList.add('hidden');
 
             await fetch('/api/message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
-                body: JSON.stringify({ sender: author, text: text, respondent: respondent, attachment: fileToSend })
+                body: JSON.stringify({ sender: author, text: text, respondent: respondent })
             });
             await fetchState(true);
-            
-            if (respondent === 'Bruno') {
-                document.getElementById('leoTriggerBar').classList.remove('hidden');
-            }
+            if (respondent === 'Bruno') document.getElementById('leoTriggerBar').classList.remove('hidden');
         }
 
         async function callLeo() {
             const btn = document.getElementById('leoCallBtn');
             btn.disabled = true;
             try {
-                const res = await fetch('/api/colleague_turn', {
+                await fetch('/api/colleague_turn', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-AQ-PIN': currentPin },
                     body: JSON.stringify({ colleague: 'Leo' })
                 });
-                const data = await res.json();
-                if (data.status === 'ok') document.getElementById('leoTriggerBar').classList.add('hidden');
+                document.getElementById('leoTriggerBar').classList.add('hidden');
                 await fetchState(true);
             } catch (err) {
             } finally {
@@ -682,12 +615,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         async function saveToGitHub() {
             await fetch('/api/sync', { method: 'POST', headers: { 'X-AQ-PIN': currentPin } });
-            alert("Saglabāts GitHub arhīvā!");
-        }
-
-        function copyCurrentArtifact() {
-            navigator.clipboard.writeText(document.getElementById('artifactCode').innerText);
-            alert("Nokopēts starpliktuvē!");
+            alert("Saglabāts arhīvā!");
         }
 
         checkAuth();
